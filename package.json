@@ -3,13 +3,38 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:unit": "vitest --dom"
   },
   "dependencies": {
-    "astro": "^2.10.1"
+    "@astrojs/node": "^6.0.2",
+    "@astrojs/vue": "^3.0.0",
+    "@nanostores/vue": "^0.10.0",
+    "@tanstack/vue-query": "^4.32.6",
+    "@vee-validate/zod": "^4.11.8",
+    "@vueuse/core": "^10.3.0",
+    "astro": "^3.3.2",
+    "axios": "^1.4.0",
+    "date-fns": "^2.30.0",
+    "nanostores": "^0.9.4",
+    "vee-validate": "^4.11.8",
+    "vue": "^3.3.5",
+    "vuetify": "^3.3.11"
+  },
+  "devDependencies": {
+    "@mdi/font": "^7.2.96",
+    "@vitejs/plugin-basic-ssl": "^1.0.2",
+    "camelcase-keys": "^9.1.2",
+    "happy-dom": "^10.11.0",
+    "unplugin-auto-import": "^0.16.6",
+    "unplugin-vue-components": "^0.25.1",
+    "vite": "^5.0.0",
+    "vitest": "^0.34.3",
+    "zod": "^3.22.4"
   }
 }
