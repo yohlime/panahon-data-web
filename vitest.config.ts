@@ -12,7 +12,6 @@ export default getViteConfig({
         'vue',
         'vee-validate',
         {
-          axios: [['default', 'axios']],
           '@tanstack/vue-query': ['useQuery', 'useMutation', 'useQueryClient'],
           '@vee-validate/zod': ['toTypedSchema'],
         },
