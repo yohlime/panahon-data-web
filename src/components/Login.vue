@@ -11,6 +11,7 @@
           placeholder="Username"
           prepend-inner-icon="mdi-account"
           variant="outlined"
+          name="username"
         ></v-text-field>
 
         <div class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between">
@@ -38,6 +39,7 @@
           prepend-inner-icon="mdi-lock-outline"
           variant="outlined"
           @click:append-inner="passwordVisible = !passwordVisible"
+          name="password"
         ></v-text-field>
 
         <v-btn

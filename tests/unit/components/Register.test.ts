@@ -3,6 +3,9 @@ import { VueWrapper, mount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 
+// @ts-expect-error not exported member
+import { mockMutateFn } from '@tanstack/vue-query'
+
 import Register from '@/components/Register.vue'
 
 type LocalTestCtx = {
@@ -13,14 +16,7 @@ const vuetify = createVuetify({ components })
 
 global.ResizeObserver = require('resize-observer-polyfill')
 
-const mMutateFn = vi.fn()
-vi.mock('@tanstack/vue-query', () => ({
-  useMutation: () => ({
-    isLoading: false,
-    isError: false,
-    mutate: mMutateFn,
-  }),
-}))
+vi.mock('@tanstack/vue-query')
 
 describe('Register', () => {
   beforeEach<LocalTestCtx>((ctx) => {
@@ -99,6 +95,6 @@ describe('Register', () => {
     await Promise.all(inputs.map((input) => input.setValue(registerArgs[input.element.name])))
     await wrapper.find('form').trigger('submit')
 
-    expect(mMutateFn).toHaveBeenCalledWith(registerArgs)
+    expect(mockMutateFn).toHaveBeenCalledWith(registerArgs)
   })
 })

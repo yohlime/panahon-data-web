@@ -16,7 +16,6 @@ import {
 import type { User, UserRegisterArgs } from '@/types/user'
 import { ZodError } from 'zod'
 
-vi.mock('_axios')
 vi.mock('@/utils/axios')
 vi.mock('@/schemas/user')
 

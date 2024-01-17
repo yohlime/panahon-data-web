@@ -3,6 +3,9 @@ import { VueWrapper, mount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 
+// @ts-expect-error not exported member
+import { mockMutateFn } from '@tanstack/vue-query'
+
 import Login from '@/components/Login.vue'
 
 type LocalTestCtx = {
@@ -13,15 +16,7 @@ const vuetify = createVuetify({ components })
 
 global.ResizeObserver = require('resize-observer-polyfill')
 
-const mHandleSubmit = vi.fn()
-
-vi.mock('@tanstack/vue-query', () => ({
-  useMutation: () => ({
-    isLoading: false,
-    isError: false,
-    mutate: mHandleSubmit,
-  }),
-}))
+vi.mock('@tanstack/vue-query')
 
 describe('Login', () => {
   beforeEach<LocalTestCtx>((ctx) => {
@@ -50,58 +45,62 @@ describe('Login', () => {
 
     expect(inputs).toHaveLength(2)
 
-    expect(inputs[0].element.value).toEqual('') // username
-    expect(inputs[1].element.value).toEqual('') // password
+    for (const input of inputs) {
+      expect(input.element.value).toEqual('')
+    }
 
     const button = wrapper.find('button')
 
     await vi.waitUntil(() => button.element.disabled, { timeout: 4500 })
 
-    // login button
     expect(button.element.innerHTML).toMatch(/[lL]og [iI]n/)
     expect(button.element.disabled).toBe(true)
   })
 
   it<LocalTestCtx>('validation', async ({ wrapper, expect }) => {
     const inputs = wrapper.findAll('input')
-    const buttons = wrapper.findAll('button')
+    const button = wrapper.find('button')
 
-    expect(inputs[0].element.value).toEqual('') // username
-    expect(inputs[1].element.value).toEqual('') // password
+    await vi.waitUntil(() => button.element.disabled, { timeout: 4500 })
+    expect(button.element.disabled).toBe(true)
 
-    await vi.waitUntil(() => buttons[0].element.disabled, { timeout: 4500 })
+    const loginArgs: Record<string, string> = {
+      username: 'jdoe123',
+      password: 'secretPaSS',
+    }
 
-    expect(buttons[0].element.disabled).toBe(true)
+    await Promise.all(inputs.map((input) => input.setValue(loginArgs[input.element.name])))
+    for (const input of inputs) {
+      expect(input.element.value).toEqual(loginArgs[input.element.name])
+    }
+    await vi.waitUntil(() => !button.element.disabled, { timeout: 4500 })
+    expect(button.element.disabled).toBe(false)
 
-    await inputs[0].setValue('validusername')
-    await inputs[1].setValue('validpassword')
+    // password too short
+    const passwordInput = inputs.find(({ element: { name } }) => name === 'password')
+    passwordInput?.setValue('short')
+    expect(passwordInput?.element.value).toEqual('short')
+    await vi.waitUntil(() => button.element.disabled, { timeout: 4500 })
+    expect(button.element.disabled).toBe(true)
 
-    expect(inputs[0].element.value).toEqual('validusername') // username
-    expect(inputs[1].element.value).toEqual('validpassword') // password
-
-    await vi.waitUntil(() => !buttons[0].element.disabled, { timeout: 4500 })
-    expect(buttons[0].element.disabled).toBe(false)
-
-    await inputs[1].setValue('short')
-    expect(inputs[1].element.value).toEqual('short') // password
-
-    await vi.waitUntil(() => buttons[0].element.disabled, { timeout: 4500 })
-    expect(buttons[0].element.disabled).toBe(true)
+    // input valid password again
+    await passwordInput?.setValue(loginArgs['password'])
+    expect(passwordInput?.element.value).toEqual(loginArgs['password'])
+    await vi.waitUntil(() => !button.element.disabled, { timeout: 4500 })
+    expect(button.element.disabled).toBe(false)
   })
 
   it<LocalTestCtx>('submit', async ({ wrapper, expect }) => {
     const inputs = wrapper.findAll('input')
 
-    const loginArgs = {
-      username: 'validusername',
-      password: 'validpassword',
+    const loginArgs: Record<string, string> = {
+      username: 'jdoe123',
+      password: 'secretPaSS',
     }
 
-    await inputs[0].setValue(loginArgs.username)
-    await inputs[1].setValue(loginArgs.password)
-
+    await Promise.all(inputs.map((input) => input.setValue(loginArgs[input.element.name])))
     await wrapper.find('form').trigger('submit')
 
-    expect(mHandleSubmit).toHaveBeenCalledWith(loginArgs)
+    expect(mockMutateFn).toHaveBeenCalledWith(loginArgs)
   })
 })
