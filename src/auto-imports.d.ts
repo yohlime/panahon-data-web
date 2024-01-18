@@ -8,7 +8,6 @@ declare global {
   const EffectScope: typeof import('vue')['EffectScope']
   const FieldContextKey: typeof import('vee-validate')['FieldContextKey']
   const FormContextKey: typeof import('vee-validate')['FormContextKey']
-  const axios: typeof import('axios')['default']
   const computed: typeof import('vue')['computed']
   const configure: typeof import('vee-validate')['configure']
   const createApp: typeof import('vue')['createApp']

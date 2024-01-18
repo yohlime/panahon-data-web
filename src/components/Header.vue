@@ -1,5 +1,9 @@
 <template>
   <v-app-bar color="blue-darken-4" prominent>
+    <template v-slot:prepend>
+      <v-app-bar-nav-icon @click.stop="drawer = !drawer" data-testid="toggle-nav-btn"></v-app-bar-nav-icon>
+    </template>
+
     <v-toolbar-title>Panahon</v-toolbar-title>
 
     <v-spacer></v-spacer>
@@ -38,6 +42,8 @@
   import { $isLoggedIn, logout } from '@/stores/user'
 
   const isLoggedIn = useStore($isLoggedIn)
+
+  const drawer = defineModel<boolean>('drawer')
 
   const loginDialog = ref(false)
   const registerDialog = ref(false)

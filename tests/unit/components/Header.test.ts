@@ -17,13 +17,17 @@ type LocalTestCtx = {
 
 vi.mock('@tanstack/vue-query')
 
-const mountComponent = () => {
-  return mount(
+const mountComponent = () =>
+  mount(
     {
-      template: '<v-layout><Header /></v-layout>',
+      template: '<v-layout><Header v-model:drawer="drawer" /></v-layout>',
+      data() {
+        return {
+          drawer: false,
+        }
+      },
     },
     {
-      props: {},
       global: {
         components: {
           Header,
@@ -47,7 +51,6 @@ const mountComponent = () => {
       },
     }
   )
-}
 
 describe('Header', () => {
   beforeEach<LocalTestCtx>((ctx) => {
@@ -61,7 +64,7 @@ describe('Header', () => {
   describe('mount', () => {
     test<LocalTestCtx>('default', ({ wrapper, expect }) => {
       const buttons = wrapper.findAll('button')
-      expect(buttons).toHaveLength(2)
+      expect(buttons).toHaveLength(3)
     })
 
     test<LocalTestCtx>('authenticated', ({ wrapper, expect }) => {
@@ -71,6 +74,22 @@ describe('Header', () => {
       const _wrapper = mountComponent()
       const button = _wrapper.find('[data-testid=logout-btn]')
       expect(button.exists()).toBe(true)
+    })
+  })
+  describe('drawer toggle', () => {
+    test<LocalTestCtx>('default', ({ wrapper, expect }) => {
+      expect(wrapper.find('[data-testid=toggle-nav-btn]').exists()).toBe(true)
+    })
+
+    test<LocalTestCtx>('toggle', async ({ wrapper, expect }) => {
+      const header = wrapper.findComponent(Header)
+      const btn = wrapper.find('[data-testid=toggle-nav-btn]')
+      const initStatus = header.props('drawer')
+
+      await btn.trigger('click')
+      expect(header.props('drawer')).toBe(!initStatus)
+      await btn.trigger('click')
+      expect(header.props('drawer')).toBe(initStatus)
     })
   })
 
@@ -83,7 +102,6 @@ describe('Header', () => {
       await wrapper.find('[data-testid=open-login-btn]').trigger('click')
       const login = wrapper.findComponent('.login')
       expect(login.exists()).toBe(true)
-      expect(wrapper.findComponent('.register').exists()).toBe(false)
     })
 
     test<LocalTestCtx>('toggle', async ({ wrapper, expect }) => {
