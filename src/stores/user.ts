@@ -1,4 +1,5 @@
-import { action, atom, computed } from 'nanostores'
+import { persistentAtom } from '@nanostores/persistent'
+import { action, computed } from 'nanostores'
 
 import axios from '@/utils/axios'
 
@@ -9,7 +10,10 @@ import type { User, UserLoginArgs, UserRegisterArgs } from '@/types/user'
 
 const base_url = `${API_URL}/users`
 
-export const $authUser = atom({} as User)
+export const $authUser = persistentAtom<User | undefined>('authUser', undefined, {
+  encode: JSON.stringify,
+  decode: JSON.parse,
+})
 
 export const getUser = action($authUser, 'getUser', async (_user) => {
   const { data } = await axios.get(`${base_url}/auth`)
@@ -19,7 +23,7 @@ export const getUser = action($authUser, 'getUser', async (_user) => {
 })
 
 export const setUser = action($authUser, 'setUser', (user, newUser?: User) => {
-  user.set(newUser || ({} as User))
+  user.set(newUser)
 })
 
 export const login = action($authUser, 'login', async (_user, loginArgs: UserLoginArgs) => {
@@ -35,9 +39,9 @@ export const login = action($authUser, 'login', async (_user, loginArgs: UserLog
 export const logout = action($authUser, 'logout', async (_user) => {
   try {
     await axios.post(`${base_url}/logout`)
-    _user.set({} as User)
+    _user.set(undefined)
   } catch (error) {
-    _user.set({} as User)
+    _user.set(undefined)
   }
 })
 
@@ -50,11 +54,14 @@ export const register = async (registerArgs: UserRegisterArgs) => {
   }
 }
 
-export const $isLoggedIn = computed($authUser, (user) => user.username?.length > 0)
+export const $isLoggedIn = computed($authUser, (user) => user !== undefined && user.username.length > 0)
 
 export const $isAdmin = computed(
-  $authUser,
-  (user) => user?.roles?.includes('ADMIN') || user?.roles?.includes('SUPERADMIN') || false
+  [$isLoggedIn, $authUser],
+  (isLoggedIn, user) => isLoggedIn && user !== undefined && ['ADMIN', 'SUPERADMIN'].some((r) => user.roles?.includes(r))
 )
 
-export const $isSuperAdmin = computed($authUser, (user) => user?.roles?.includes('SUPERADMIN') || false)
+export const $isSuperAdmin = computed(
+  [$isLoggedIn, $authUser],
+  (isLoggedIn, user) => isLoggedIn && user?.roles !== undefined && user.roles.includes('SUPERADMIN')
+)

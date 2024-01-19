@@ -1,6 +1,7 @@
-import { action, atom } from 'nanostores'
+import { persistentAtom } from '@nanostores/persistent'
+import { action, computed } from 'nanostores'
 
-import { $isSuperAdmin } from '@/stores/user'
+import { $isAdmin, $isSuperAdmin } from '@/stores/user'
 
 export const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -11,11 +12,11 @@ export interface Route {
   description?: string
   title: string
   to: string
-  visible: boolean
+  visible?: boolean
   icon: string
 }
 
-export const $routes = atom<Route[]>([
+const routes = [
   {
     name: 'index',
     title: 'Dashboard',
@@ -25,11 +26,27 @@ export const $routes = atom<Route[]>([
   },
   { name: 'stations', title: 'Weather Stations', to: route('stations'), visible: true, icon: 'mdi-weather-pouring' },
   { name: 'simcard', title: 'SIM Card', to: route('simcard'), visible: true, icon: 'mdi-sim' },
-  { name: 'users', title: 'Users', to: route('users'), visible: $isSuperAdmin.get(), icon: 'mdi-account' },
-  { name: 'roles', title: 'Roles', to: route('roles'), visible: $isSuperAdmin.get(), icon: 'mdi-account-badge' },
-])
+  { name: 'users', title: 'Users', to: route('users'), icon: 'mdi-account' },
+  { name: 'roles', title: 'Roles', to: route('roles'), icon: 'mdi-account-badge' },
+]
 
-export const $activeRoute = atom($routes.get()[0])
+export const $routes = computed([$isAdmin, $isSuperAdmin], (isAdmin, isSuperAdmin) => {
+  const needsSuperAdmin = ['users', 'roles']
+  const needsAdmin: string[] = []
+  return routes.map((r) => {
+    if (needsSuperAdmin.includes(r.name)) {
+      return { ...r, visible: isSuperAdmin }
+    } else if (needsAdmin.includes(r.name)) {
+      return { ...r, visible: isAdmin }
+    }
+    return r
+  })
+})
+
+export const $activeRoute = persistentAtom<Route>('activeRoute', $routes.get()[0], {
+  encode: JSON.stringify,
+  decode: JSON.parse,
+})
 
 export const setActiveRoute = action($activeRoute, 'setActiveRoute', (activeRoute, newRoute) => {
   activeRoute.set(newRoute)

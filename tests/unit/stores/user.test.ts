@@ -13,71 +13,81 @@ import {
   register,
   setUser,
 } from '@/stores/user'
-import type { User, UserRegisterArgs } from '@/types/user'
-import { ZodError } from 'zod'
 
 vi.mock('@/utils/axios')
 vi.mock('@/schemas/user')
 
+const user = {
+  full_name: 'John Doe',
+  username: 'jdoe2345',
+  email: 'jdoe@email.com',
+  password_changed_at: new Date(),
+  created_at: new Date(),
+}
+
+const loginArgs = {
+  username: user.username,
+  password: 'secret',
+}
+
+const registerArgs = {
+  username: user.username,
+  password: loginArgs.password,
+  confirm_password: loginArgs.password,
+  email: user.email,
+  full_name: user.full_name,
+}
+
 describe('$authUser', () => {
   beforeEach(() => {
     keepMount($authUser)
+    keepMount($isLoggedIn)
+    keepMount($isAdmin)
+    keepMount($isSuperAdmin)
   })
 
   afterEach(() => {
-    cleanStores($authUser)
+    cleanStores($authUser, $isLoggedIn, $isAdmin, $isSuperAdmin)
   })
 
   describe('getUser', () => {
-    it('should initialize user', async () => {
-      const user: User = {
-        full_name: 'John Doe',
-        username: 'jdoe2345',
-        email: 'jdoe@email.com',
-        password_changed_at: new Date(),
-        created_at: new Date(),
-      }
+    test('success', async ({ expect }) => {
       vi.mocked(axios.get).mockResolvedValueOnce({ data: user })
       const newUser = await getUser()
 
       expect($authUser.get()).toEqual(newUser)
     })
+
+    test('api error', async ({ expect }) => {
+      vi.mocked(axios.get).mockRejectedValueOnce({ response: { status: 404 } })
+      await expect(getUser()).rejects.toThrowError()
+      expect($authUser.get()).toBeUndefined()
+    })
+
+    test('parse error', async ({ expect }) => {
+      vi.mocked(axios.get).mockResolvedValueOnce({ data: user })
+      vi.mocked(userSchema.parse).mockImplementation(() => {
+        throw new Error('parse error')
+      })
+      await expect(getUser()).rejects.toThrowError()
+      expect($authUser.get()).toBeUndefined()
+    })
   })
 
   describe('setUser', () => {
-    it('should set authUser', () => {
-      const user: User = {
-        full_name: 'John Doe',
-        username: 'jdoe2345',
-        email: 'jdoe@email.com',
-        password_changed_at: new Date(),
-        created_at: new Date(),
-      }
+    test('with valid data', ({ expect }) => {
       setUser(user)
       expect($authUser.get()).toEqual(user)
     })
 
-    it('should set authUser to `{}` if no data is passed', () => {
+    test('empty', ({ expect }) => {
       setUser()
-      expect($authUser.get()).toEqual({})
+      expect($authUser.get()).toBeUndefined()
     })
   })
 
   describe('login', () => {
-    const loginArgs = {
-      username: 'jdoe2345',
-      password: 'secret',
-    }
-
-    const user: User = {
-      full_name: 'John Doe',
-      username: loginArgs.username,
-      email: 'jdoe@email.com',
-      password_changed_at: new Date(),
-      created_at: new Date(),
-    }
-
-    it('should set authUser on successful login', async () => {
+    test('success', async ({ expect }) => {
       vi.mocked(axios.post).mockResolvedValueOnce({ status: 204 })
       vi.mocked(axios.get).mockResolvedValueOnce({ data: user })
       vi.mocked(userSchema.parse).mockReturnValueOnce(user)
@@ -86,16 +96,16 @@ describe('$authUser', () => {
       expect($authUser.get()).toEqual(user)
     })
 
-    it('should throw on api server error', async () => {
+    test('api server error', async ({ expect }) => {
       vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 404 } })
       await expect(login(loginArgs)).rejects.toThrowError()
     })
 
-    it('should throw on parse error', async () => {
+    test('parse error', async ({ expect }) => {
       vi.mocked(axios.post).mockResolvedValueOnce({ status: 204 })
       vi.mocked(axios.get).mockResolvedValueOnce({ data: {} })
       vi.mocked(userSchema.parse).mockImplementation(() => {
-        throw new ZodError([])
+        throw new Error('parse error')
       })
 
       await expect(login(loginArgs)).rejects.toThrowError()
@@ -103,121 +113,91 @@ describe('$authUser', () => {
   })
 
   describe('logout', () => {
-    const user: User = {
-      full_name: 'John Doe',
-      username: 'jdoe2345',
-      email: 'jdoe@email.com',
-      password_changed_at: new Date(),
-      created_at: new Date(),
-    }
-
-    it('should unset authUser', async () => {
+    test('success', async ({ expect }) => {
       $authUser.set(user)
       expect($authUser.get()).toEqual(user)
       await logout()
-      expect($authUser.get()).toEqual({})
+      expect($authUser.get()).toBeUndefined()
     })
   })
 
   describe('register', () => {
-    const regArgs: UserRegisterArgs = {
-      username: 'jdoe2345',
-      password: 'secret',
-      confirm_password: 'secret',
-      email: 'jdoe@email.com',
-      full_name: 'John Doe',
-    }
-
-    const user: User = {
-      full_name: regArgs.full_name,
-      username: regArgs.username,
-      email: regArgs.email,
-      password_changed_at: new Date(),
-      created_at: new Date(),
-    }
-
-    it('should return `true` on success', async () => {
+    test('success', async ({ expect }) => {
       vi.mocked(axios.post).mockResolvedValueOnce({
         status: 204,
       })
-      const success = await register(regArgs)
+      const success = await register(registerArgs)
       expect(success).toBeTruthy()
     })
 
-    it('should return `false` on error', async () => {
+    test('error', async ({ expect }) => {
       vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 404 } })
-      const success = await register(regArgs)
+      const success = await register(registerArgs)
       expect(success).toBeFalsy()
     })
   })
 
   describe('$isLoggedIn', () => {
-    beforeEach(() => {
-      keepMount($isLoggedIn)
-    })
-
-    afterEach(() => {
-      cleanStores($isLoggedIn)
-    })
-
-    it('should be `true` when $authuser.username is set', () => {
-      $authUser.set({ username: 'testuser' } as User)
+    test('true', ({ expect }) => {
+      $authUser.set(user)
       expect($isLoggedIn.get()).toEqual(true)
     })
 
-    it('should be `false` when $authuser is empty', async () => {
-      $authUser.set({} as User)
+    test('false', async ({ expect }) => {
+      $authUser.set(undefined)
+      expect($isLoggedIn.get()).toEqual(false)
+      $authUser.set({ ...user, username: '' })
       expect($isLoggedIn.get()).toEqual(false)
     })
   })
 
   describe('$isAdmin', () => {
-    beforeEach(() => {
-      keepMount($isAdmin)
+    test('true', ({ expect }) => {
+      $authUser.set({ ...user, roles: ['ADMIN'] })
+      expect($isAdmin.get(), 'only `ADMIN`').toEqual(true)
+      $authUser.set({ ...user, roles: ['ADMIN', 'TOMATO'] })
+      expect($isAdmin.get(), 'has `ADMIN`').toEqual(true)
+      $authUser.set({ ...user, roles: ['SUPERADMIN', 'USER'] })
+      expect($isAdmin.get(), 'has `SUPERADMIN`').toEqual(true)
     })
 
-    afterEach(() => {
-      cleanStores($isAdmin)
-    })
-
-    it('should be true when $authuser.roles includes `ADMIN` or `SUPERADMIN`', () => {
-      $authUser.set({ username: 'testuser' } as User)
-      expect($isAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: [] as string[] } as User)
-      expect($isAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['USER', 'POTATO'] } as User)
-      expect($isAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['ADMIN'] } as User)
-      expect($isAdmin.get()).toEqual(true)
-      $authUser.set({ username: 'testuser', roles: ['ADMIN', 'TOMATO'] } as User)
-      expect($isAdmin.get()).toEqual(true)
-      $authUser.set({ username: 'testuser', roles: ['SUPERADMIN', 'USER'] } as User)
-      expect($isAdmin.get()).toEqual(true)
+    test('false', ({ expect }) => {
+      $authUser.set(user)
+      expect($isAdmin.get(), 'no `roles`').toEqual(false)
+      $authUser.set({ ...user, roles: [] })
+      expect($isAdmin.get(), 'empty `roles`').toEqual(false)
+      $authUser.set({ ...user, roles: ['USER', 'POTATO'] })
+      expect($isAdmin.get(), 'not admin or superadmin').toEqual(false)
+      $authUser.set(undefined)
+      expect($isAdmin.get(), 'undefined `user`').toEqual(false)
+      $authUser.set({ ...user, username: '', roles: ['ADMIN'] })
+      expect($isAdmin.get(), 'empty `username`').toEqual(false)
     })
   })
 
   describe('$isSuperAdmin', () => {
-    beforeEach(() => {
-      keepMount($isSuperAdmin)
+    test('true', ({ expect }) => {
+      $authUser.set({ ...user, roles: ['SUPERADMIN'] })
+      expect($isSuperAdmin.get(), 'only `SUPERADMIN`').toEqual(true)
+      $authUser.set({ ...user, roles: ['SUPERADMIN', 'USER'] })
+      expect($isSuperAdmin.get(), 'has `SUPERADMIN`').toEqual(true)
     })
 
-    afterEach(() => {
-      cleanStores($isSuperAdmin)
-    })
-
-    it('should be true when $authuser.roles includes `SUPERADMIN`', () => {
-      $authUser.set({ username: 'testuser' } as User)
-      expect($isSuperAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: [] as string[] } as User)
-      expect($isSuperAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['USER', 'POTATO'] } as User)
-      expect($isSuperAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['ADMIN'] } as User)
-      expect($isSuperAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['ADMIN', 'TOMATO'] } as User)
-      expect($isSuperAdmin.get()).toEqual(false)
-      $authUser.set({ username: 'testuser', roles: ['SUPERADMIN', 'USER'] } as User)
-      expect($isSuperAdmin.get()).toEqual(true)
+    test('false', ({ expect }) => {
+      $authUser.set(user)
+      expect($isSuperAdmin.get(), 'no `roles`').toEqual(false)
+      $authUser.set({ ...user, roles: [] as string[] })
+      expect($isSuperAdmin.get(), 'empty `roles`').toEqual(false)
+      $authUser.set({ ...user, roles: ['USER', 'POTATO'] })
+      expect($isSuperAdmin.get(), 'no `SUPERADMIN`').toEqual(false)
+      $authUser.set({ ...user, roles: ['ADMIN'] })
+      expect($isSuperAdmin.get(), 'only `ADMIN`').toEqual(false)
+      $authUser.set({ ...user, roles: ['ADMIN', 'TOMATO'] })
+      expect($isSuperAdmin.get(), 'has `ADMIN`').toEqual(false)
+      $authUser.set(undefined)
+      expect($isSuperAdmin.get(), 'undefined `user`').toEqual(false)
+      $authUser.set({ ...user, username: '', roles: ['SUPERADMIN'] })
+      expect($isSuperAdmin.get(), 'empty `username`').toEqual(false)
     })
   })
 })
