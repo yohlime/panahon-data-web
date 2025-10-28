@@ -1,5 +1,4 @@
-import { persistentAtom } from '@nanostores/persistent'
-import { action, computed } from 'nanostores'
+import { atom, computed } from 'nanostores'
 
 import { $isAdmin, $isSuperAdmin } from '@/stores/user'
 
@@ -7,7 +6,7 @@ export const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 export const route = (pathName?: string) => `${basePath}/${pathName ?? ''}`
 
-export interface Route {
+export type Route = {
   name: string
   description?: string
   title: string
@@ -16,7 +15,7 @@ export interface Route {
   icon: string
 }
 
-const routes = [
+const routes: Route[] = [
   {
     name: 'index',
     title: 'Dashboard',
@@ -43,11 +42,8 @@ export const $routes = computed([$isAdmin, $isSuperAdmin], (isAdmin, isSuperAdmi
   })
 })
 
-export const $activeRoute = persistentAtom<Route>('activeRoute', $routes.get()[0], {
-  encode: JSON.stringify,
-  decode: JSON.parse,
-})
+export const $activeRoute = atom($routes.get()[0])
 
-export const setActiveRoute = action($activeRoute, 'setActiveRoute', (activeRoute, newRoute) => {
-  activeRoute.set(newRoute)
-})
+export const setActiveRoute = (newRoute: Route) => {
+  $activeRoute.set(newRoute)
+}

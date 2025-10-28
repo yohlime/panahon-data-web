@@ -1,19 +1,25 @@
 import { cleanStores, keepMount } from 'nanostores'
 
-import { $activeRoute, $routes, setActiveRoute } from '@/stores/routes'
+import { $activeRoute, $routes, setActiveRoute, type Route } from '@/stores/routes'
 
-const routes = [
+const routes: Route[] = [
   {
+    title: 'Route 1',
     name: 'index',
     to: '/',
+    icon: 'test-icon',
   },
   {
+    title: 'Route 2',
     name: 'user',
     to: '/user',
+    icon: 'test-icon',
   },
   {
+    title: 'Route 3',
     name: 'login',
     to: '/login',
+    icon: 'test-icon',
   },
 ]
 

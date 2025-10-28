@@ -2,17 +2,7 @@ import axios from '@/utils/axios'
 import { cleanStores, keepMount } from 'nanostores'
 
 import { userSchema } from '@/schemas/user'
-import {
-  $authUser,
-  $isAdmin,
-  $isLoggedIn,
-  $isSuperAdmin,
-  getUser,
-  login,
-  logout,
-  register,
-  setUser,
-} from '@/stores/user'
+import { $authUser, $isAdmin, $isLoggedIn, $isSuperAdmin, login, logout, register, getUser } from '@/stores/user'
 
 vi.mock('@/utils/axios')
 vi.mock('@/schemas/user')
@@ -51,16 +41,16 @@ describe('$authUser', () => {
   })
 
   describe('getUser', () => {
-    test('success', async ({ expect }) => {
+    test('default', async ({ expect }) => {
       vi.mocked(axios.get).mockResolvedValueOnce({ data: user })
-      const newUser = await getUser()
-
-      expect($authUser.get()).toEqual(newUser)
+      vi.mocked(userSchema.parse).mockReturnValueOnce(user)
+      await expect(getUser()).resolves.toEqual(user)
+      expect($authUser.get()).toEqual(user)
     })
 
     test('api error', async ({ expect }) => {
-      vi.mocked(axios.get).mockRejectedValueOnce({ response: { status: 404 } })
-      await expect(getUser()).rejects.toThrowError()
+      vi.mocked(axios.get).mockRejectedValue({ response: { status: 404 } })
+      await expect(getUser()).resolves.toBeUndefined()
       expect($authUser.get()).toBeUndefined()
     })
 
@@ -69,19 +59,7 @@ describe('$authUser', () => {
       vi.mocked(userSchema.parse).mockImplementation(() => {
         throw new Error('parse error')
       })
-      await expect(getUser()).rejects.toThrowError()
-      expect($authUser.get()).toBeUndefined()
-    })
-  })
-
-  describe('setUser', () => {
-    test('with valid data', ({ expect }) => {
-      setUser(user)
-      expect($authUser.get()).toEqual(user)
-    })
-
-    test('empty', ({ expect }) => {
-      setUser()
+      await expect(getUser()).resolves.toBeUndefined()
       expect($authUser.get()).toBeUndefined()
     })
   })
@@ -92,13 +70,15 @@ describe('$authUser', () => {
       vi.mocked(axios.get).mockResolvedValueOnce({ data: user })
       vi.mocked(userSchema.parse).mockReturnValueOnce(user)
 
-      await login(loginArgs)
+      await expect(login(loginArgs)).resolves.toEqual(user)
       expect($authUser.get()).toEqual(user)
     })
 
     test('api server error', async ({ expect }) => {
       vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 404 } })
-      await expect(login(loginArgs)).rejects.toThrowError()
+      vi.mocked(axios.get).mockRejectedValue({ response: { status: 404 } })
+      await expect(login(loginArgs)).resolves.toBeUndefined()
+      expect($authUser.get()).toBeUndefined()
     })
 
     test('parse error', async ({ expect }) => {
@@ -107,8 +87,8 @@ describe('$authUser', () => {
       vi.mocked(userSchema.parse).mockImplementation(() => {
         throw new Error('parse error')
       })
-
-      await expect(login(loginArgs)).rejects.toThrowError()
+      await expect(login(loginArgs)).resolves.toBeUndefined()
+      expect($authUser.get()).toBeUndefined()
     })
   })
 

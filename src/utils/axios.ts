@@ -1,8 +1,7 @@
 import _axios from 'axios'
 
-import { API_URL } from '@/stores/common'
-
 const axios = _axios.create({
+  baseURL: import.meta.env.PUBLIC_PANAHON_API,
   withCredentials: true,
 })
 
@@ -12,13 +11,13 @@ axios.interceptors.response.use(
     const originalRequest = error.config
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      const { status } = await _axios.post(`${API_URL}/tokens/renew`)
+      const { status } = await axios.post('/tokens/renew')
       if (status === 204) {
         return axios(originalRequest)
       }
     }
     return Promise.reject(error)
-  }
+  },
 )
 
 export default axios

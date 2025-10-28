@@ -1,0 +1,84 @@
+<template>
+  <div class="w-full flex flex-col space-y-4 md:space-y-6">
+    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">Login</h1>
+    <form class="space-y-4 md:space-y-6" @submit.prevent="handleSubmit">
+      <Input name="username" placeholder="username" v-model="username" v-bind="usernameProps">Username</Input>
+      <Input type="password" name="password" placeholder="••••••••" v-model="password" v-bind="passwordProps"
+        >Password</Input
+      >
+      <!-- <div class="flex items-center justify-between"> -->
+      <!--   <div class="flex items-start"> -->
+      <!--     <div class="flex items-center h-5"> -->
+      <!--       <input -->
+      <!--         id="remember" -->
+      <!--         aria-describedby="remember" -->
+      <!--         type="checkbox" -->
+      <!--         v-model="remember" -->
+      <!--         v-bind="rememberProps" -->
+      <!--         class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" -->
+      <!--       /> -->
+      <!--     </div> -->
+      <!--     <div class="ml-3 text-sm"> -->
+      <!--       <label for="remember" class="text-gray-500 dark:text-gray-300">Remember me</label> -->
+      <!--     </div> -->
+      <!--   </div> -->
+      <!--   <a href="#" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">Forgot password?</a> -->
+      <!-- </div> -->
+      <Button
+        :disabled="!meta.valid"
+        :is-pending="isPending"
+        :class="[
+          'w-full text-gray-200',
+          meta.valid
+            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+            : 'bg-blue-400 dark:bg-blue-500',
+        ]"
+        >Login</Button
+      >
+    </form>
+  </div>
+</template>
+
+<script setup lang="ts">
+  import { useMutation } from '@tanstack/vue-query'
+  import { useForm } from 'vee-validate'
+  import { toTypedSchema } from '@vee-validate/zod'
+
+  import { userLoginArgsSchema } from '@/schemas/user'
+  import { login } from '@/stores/user'
+  import type { UserLoginArgs } from '@/types/user'
+
+  import Input from '@/components/ui/Input.vue'
+  import Button from '@/components/ui/Button.vue'
+
+  const emit = defineEmits<{
+    success: []
+  }>()
+
+  const { isPending, mutate } = useMutation({
+    mutationKey: ['auth', 'login'],
+    mutationFn: login,
+    onSuccess: () => {
+      emit('success')
+    },
+    onError: () => {
+      setFieldError('username', 'Invalid username or password')
+    },
+  })
+
+  const { defineField, meta, setFieldError, values } = useForm({
+    validationSchema: toTypedSchema(userLoginArgsSchema),
+  })
+
+  const [username, usernameProps] = defineField('username', {
+    props: (state) => ({ 'error-message': state.errors[0] }),
+  })
+  const [password, passwordProps] = defineField('password', {
+    props: (state) => ({ 'error-message': state.errors[0] }),
+  })
+  // const [remember, rememberProps] = defineField('rememberPassword')
+
+  const handleSubmit = () => {
+    mutate(values as UserLoginArgs)
+  }
+</script>

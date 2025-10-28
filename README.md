@@ -1,47 +1,35 @@
-# Astro Starter Kit: Minimal
+# Panahon Data Admin
 
-```
-npm create astro@latest -- --template minimal
-```
+## Getting Started
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+### 1. Clone the Repository
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```sh
+git clone <repo-url>
+cd <repo-directory>
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+### 2. Install Dependencies
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```sh
+pnpm install
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+### 3. Development Server
 
-## 🧞 Commands
+```sh
+pnpm dev
+```
 
-All commands are run from the root of the project, from a terminal:
+## Environment Configuration
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:3000`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Create a `.env` file at the root with the following required environment variables:
 
-## 👀 Want to learn more?
+| Variable             | Description                   | Example                                      |
+| -------------------- | ----------------------------- | -------------------------------------------- |
+| `APP_HOST`           | Local IP/server bind address  | `127.0.0.1`                                  |
+| `APP_PORT`           | Server port                   | `3000`                                       |
+| `APP_SITE`           | Public site URL or identifier | `panahon.observatory.ph`                     |
+| `PUBLIC_PANAHON_API` | Panahon API URL               | `https://pahanon.observatory.ph/data/api/v1` |
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+> **Note:** Never commit `.env` files or secrets to version control.

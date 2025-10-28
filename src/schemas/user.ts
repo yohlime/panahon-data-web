@@ -1,28 +1,28 @@
 import { z } from 'zod'
 
 export const userLoginArgsSchema = z.object({
-  username: z.string().regex(/^[a-z0-9]+$/, 'Must be alphanumeric'),
-  password: z.string().min(6, 'Must contain at least 6 characters'),
+  username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
+  password: z.string().min(6, { error: 'Must contain at least 6 characters' }),
 })
 
 export const userRegisterArgsSchema = z
   .object({
     full_name: z.string(),
-    email: z.string().email(),
-    username: z.string().regex(/^[a-z0-9]+$/, 'Must be alphanumeric'),
-    password: z.string().min(6, 'Must contain at least 6 characters'),
+    email: z.email(),
+    username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
+    password: z.string().min(6, { error: 'Must contain at least 6 characters' }),
     confirm_password: z.string(),
   })
   .refine((data) => data.password === data.confirm_password, {
-    message: "Passwords don't match",
     path: ['confirm_password'],
+    error: "Passwords don't match",
   })
 
 export const userSchema = z.object({
   username: z.string(),
   full_name: z.string(),
-  email: z.string().email(),
-  roles: z.string().array().optional(),
+  email: z.email(),
+  roles: z.string().array().nullish(),
   password_changed_at: z.coerce.date(),
   created_at: z.coerce.date(),
 })
@@ -42,5 +42,5 @@ export const userSessionSchema = z
     session_id: z.string(),
     user: userSchema,
   })
-  .merge(accessTokenSchema)
-  .merge(refreshTokenSchema)
+  .extend(accessTokenSchema.shape)
+  .extend(refreshTokenSchema.shape)
