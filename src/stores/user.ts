@@ -2,8 +2,13 @@ import { atom, computed } from 'nanostores'
 
 import axios from '@/utils/axios'
 
-import { userSchema } from '@/schemas/user'
-import type { User, UserLoginArgs, UserRegisterArgs } from '@/types/user'
+import {
+  createUserArgsSchema,
+  paginatedUserSchema,
+  updateUserArgsSchema,
+  userSchema,
+} from '@/schemas/user'
+import type { CreateUserReq, UpdateUserReq, User, UserLoginArgs, UserRegisterArgs } from '@/types/user'
 
 const baseUrl = '/users'
 
@@ -56,8 +61,38 @@ export const $isAdmin = computed(
   (isLoggedIn, user) =>
     isLoggedIn && user !== undefined && ['ADMIN', 'SUPERADMIN'].some((r) => user.roles?.includes(r)),
 )
-
 export const $isSuperAdmin = computed(
   [$isLoggedIn, $authUser],
-  (isLoggedIn, user) => isLoggedIn && user?.roles !== undefined && user.roles?.includes('SUPERADMIN'),
+  (isLoggedIn, user) =>
+    isLoggedIn && user?.roles !== undefined && user.roles?.includes('SUPERADMIN'),
 )
+
+export const $page = atom(1)
+export const $perPage = atom(10)
+
+export const listUsers = async () => {
+  const { data } = await axios.get(`${baseUrl}?page=${$page.get()}&per_page=${$perPage.get()}`)
+  return paginatedUserSchema.parse(data)
+}
+
+export const getUserByID = async (userID?: number) => {
+  if (!userID) return
+  const { data } = await axios.get(`${baseUrl}/${userID}`)
+  return userSchema.parse(data)
+}
+
+export const createUser = async (args: CreateUserReq) => {
+  const parsed = createUserArgsSchema.parse(args)
+  const { data } = await axios.post(baseUrl, parsed)
+  return userSchema.parse(data)
+}
+
+export const updateUser = async (args: UpdateUserReq) => {
+  const parsed = updateUserArgsSchema.parse(args)
+  const { data } = await axios.put(`${baseUrl}/${parsed.id}`, parsed)
+  return userSchema.parse(data)
+}
+
+export const deleteUser = async (userID: number) => {
+  await axios.delete(`${baseUrl}/${userID}`)
+}
