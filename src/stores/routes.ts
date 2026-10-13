@@ -28,11 +28,13 @@ const routes: Route[] = [
   { name: 'simcard', title: 'SIM Card', to: route('simcard'), visible: false, icon: 'mdi-sim' },
   { name: 'users', title: 'Users', to: route('users'), icon: 'mdi-account' },
   { name: 'roles', title: 'Roles', to: route('roles'), icon: 'mdi-account-badge' },
+  { name: 'access', title: 'API Access', to: route('settings/access'), visible: true, icon: 'mdi-key-chain' },
+  { name: 'requests', title: 'Access Requests', to: route('requests'), icon: 'mdi-clipboard-check' },
 ]
 
 export const $routes = computed([$isAdmin, $isSuperAdmin], (isAdmin, isSuperAdmin) => {
   const needsSuperAdmin = ['users', 'roles']
-  const needsAdmin: string[] = []
+  const needsAdmin: string[] = ['requests']
   return routes.map((r) => {
     if (needsSuperAdmin.includes(r.name)) {
       return { ...r, visible: isSuperAdmin }

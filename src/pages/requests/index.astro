@@ -1,0 +1,14 @@
+---
+import DefaultLayout from '@/layouts/Default.astro'
+
+import Guard from '@/components/auth/Guard.vue'
+import RequestsTable from '@/components/access/RequestsTable.vue'
+---
+
+<DefaultLayout>
+  <div class="p-4">
+    <Guard client:load :roles="['SUPERADMIN', 'ADMIN']" />
+    <h1 class="text-2xl font-bold mb-4">Access Requests</h1>
+    <RequestsTable client:load />
+  </div>
+</DefaultLayout>

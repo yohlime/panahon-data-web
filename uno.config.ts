@@ -18,6 +18,8 @@ export default defineConfig({
     'i-mdi:sim',
     'i-mdi:account',
     'i-mdi:account-badge',
+    'i-mdi:key-chain',
+    'i-mdi:clipboard-check',
   ],
   theme: {
     font: {
