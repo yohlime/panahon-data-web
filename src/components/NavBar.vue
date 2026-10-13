@@ -14,13 +14,54 @@
               Login
             </a>
           </li>
-          <li v-else>
+          <li v-else class="relative">
             <a
-              class="py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              @click.prevent="handleLogout"
+              class="py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent cursor-pointer"
+              @click.prevent="showSettings = !showSettings"
             >
-              Logout
+              <div class="i-mdi:cog text-xl"></div>
             </a>
+            <div
+              v-show="showSettings"
+              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
+            >
+              <a
+                :href="route('observations')"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="showSettings = false"
+              >
+                Observations
+              </a>
+              <a
+                v-if="isSuperAdmin"
+                :href="route('users')"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="showSettings = false"
+              >
+                Users
+              </a>
+              <a
+                v-if="isSuperAdmin"
+                :href="route('roles')"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="showSettings = false"
+              >
+                Roles
+              </a>
+              <a
+                :href="route('settings/api-keys')"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="showSettings = false"
+              >
+                API Keys
+              </a>
+              <a
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                @click.prevent="handleLogout"
+              >
+                Logout
+              </a>
+            </div>
           </li>
         </ul>
       </div>
@@ -68,9 +109,9 @@
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
   import { useStore } from '@nanostores/vue'
 
-  import { $activeRoute } from '@/stores/routes'
+  import { $activeRoute, route } from '@/stores/routes'
   import { $page as $stnPage, $perPage as $stnPerPage } from '@/stores/station'
-  import { $isLoggedIn, getUser, logout } from '@/stores/user'
+  import { $isLoggedIn, $isSuperAdmin, getUser, logout } from '@/stores/user'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
 
@@ -78,11 +119,13 @@
   import SignupForm from '@/components/form/SignUp.vue'
 
   const isLoggedIn = useStore($isLoggedIn)
+  const isSuperAdmin = useStore($isSuperAdmin)
   const activeRoute = useStore($activeRoute)
   const stnPage = useStore($stnPage)
   const stnPerPage = useStore($stnPerPage)
 
   const showDialog = ref(false)
+  const showSettings = ref(false)
   const loginDialog = ref(false)
   const signupDialog = ref(false)
 

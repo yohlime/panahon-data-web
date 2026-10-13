@@ -13,6 +13,7 @@
         ]"
         :placeholder="placeholder"
         :required="required"
+        :disabled="disabled"
       />
       <div v-if="withIconEnd" :class="['absolute inset-y-0 end-0 top-0 flex items-center', { 'pe-3.5': withIconEnd }]">
         <div v-if="!reveal" class="i-mdi:eye text-xl" @click="reveal = true"></div>
@@ -34,12 +35,14 @@
       type?: string
       placeholder?: string
       required?: boolean
+      disabled?: boolean
       errorMessage?: string
     }>(),
     {
       type: 'text',
       placeholder: '',
       required: false,
+      disabled: false,
       errorMessage: '',
     },
   )

@@ -10,7 +10,6 @@
               :props="header.getContext()"
             />
           </th>
-          <th v-if="showActions" class="px-6 py-3"></th>
         </tr>
       </thead>
       <tbody>
@@ -21,31 +20,6 @@
         >
           <td v-for="cell in row.getVisibleCells()" :key="cell.id" class="px-6 py-4">
             <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-          </td>
-          <td v-show="showActions" class="px-6 py-4">
-            <div class="flex text-xl gap-1">
-              <a
-                href="#"
-                @click.prevent="
-                  () => {
-                    itemID = row.getValue('id')
-                    editFormDialog = true
-                  }
-                "
-                ><div class="i-mdi:pencil hover:text-blue-400"></div
-              ></a>
-              <a href="#"
-                ><div
-                  class="i-mdi:delete hover:text-red-400"
-                  @click.prevent="
-                    () => {
-                      itemID = row.getValue('id')
-                      deleteDialog = true
-                    }
-                  "
-                ></div
-              ></a>
-            </div>
           </td>
         </tr>
       </tbody>
@@ -93,9 +67,17 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T">
-  import { ref, toRefs } from 'vue'
-  import { FlexRender, getCoreRowModel, useVueTable } from '@tanstack/vue-table'
+<script lang="ts">
+  export type VisibleActions = {
+    edit?: boolean
+    delete?: boolean
+  }
+</script>
+
+<script setup lang="ts" generic="T extends { id: number }, U extends ColumnDef<T>">
+  import { ref, toRefs, computed, h } from 'vue'
+  import { createColumnHelper, FlexRender, getCoreRowModel, useVueTable } from '@tanstack/vue-table'
+
   import {
     DialogContent,
     DialogOverlay,
@@ -124,27 +106,53 @@
   const props = withDefaults(
     defineProps<{
       data: T[]
-      columns: ColumnDef<T>[]
+      columns: U[]
       columnVisibility?: Record<string, boolean>
       manualPagination?: boolean
-      showActions?: boolean
+      showActions?: boolean | VisibleActions
     }>(),
     {
+      data: () => [] as T[],
       manualPagination: false,
       showActions: false,
     },
   )
 
-  const { data, columns, columnVisibility, manualPagination } = toRefs(props)
+  const { data, columns, columnVisibility, manualPagination, showActions: _showActions } = toRefs(props)
 
+  const columnHelper = createColumnHelper<T>()
   const table = useVueTable({
     data,
     get columns() {
-      return columns.value
+      return [
+        ...columns.value,
+        columnHelper.display({
+          id: 'actions',
+          cell: ({ row }) =>
+            h('div', { class: 'flex text-xl gap-1' }, [
+              showActionsObj.value.edit &&
+                h('div', {
+                  class: 'i-mdi:pencil hover:text-blue-400 cursor-pointer',
+                  onClick: () => {
+                    itemID.value = row.original.id
+                    editFormDialog.value = true
+                  },
+                }),
+              showActionsObj.value.delete &&
+                h('div', {
+                  class: 'i-mdi:delete hover:text-red-400 cursor-pointer',
+                  onClick: () => {
+                    itemID.value = row.original.id
+                    deleteDialog.value = true
+                  },
+                }),
+            ]),
+        }),
+      ]
     },
     state: {
       get columnVisibility() {
-        return columnVisibility.value
+        return { ...columnVisibility.value }
       },
     },
     getCoreRowModel: getCoreRowModel(),
@@ -154,4 +162,19 @@
   const handleDeleteAction = () => {
     if (itemID.value > 0) emit('deleteItem', itemID.value)
   }
+
+  const showActionsObj = computed(() =>
+    typeof _showActions.value === 'boolean'
+      ? {
+          edit: _showActions.value,
+          delete: _showActions.value,
+        }
+      : {
+          edit: false,
+          delete: false,
+          ..._showActions.value,
+        },
+  )
+
+  const showActions = computed(() => showActionsObj.value.edit || showActionsObj.value.delete)
 </script>
