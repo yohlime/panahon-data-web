@@ -25,7 +25,7 @@ const routes: Route[] = [
   },
   { name: 'stations', title: 'Weather Stations', to: route('stations'), visible: true, icon: 'mdi-weather-pouring' },
   { name: 'observations', title: 'Observations', to: route('observations'), visible: true, icon: 'mdi-weather-partly-rainy' },
-  { name: 'simcard', title: 'SIM Card', to: route('simcard'), visible: true, icon: 'mdi-sim' },
+  { name: 'simcard', title: 'SIM Card', to: route('simcard'), visible: false, icon: 'mdi-sim' },
   { name: 'users', title: 'Users', to: route('users'), icon: 'mdi-account' },
   { name: 'roles', title: 'Roles', to: route('roles'), icon: 'mdi-account-badge' },
 ]

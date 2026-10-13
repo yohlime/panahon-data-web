@@ -10,6 +10,15 @@ export default defineConfig({
     presetIcons(),
   ],
   transformers: [transformerDirectives()],
+  safelist: [
+    // Route icons rendered dynamically from src/stores/routes.ts.
+    'i-mdi:view-dashboard',
+    'i-mdi:weather-pouring',
+    'i-mdi:weather-partly-rainy',
+    'i-mdi:sim',
+    'i-mdi:account',
+    'i-mdi:account-badge',
+  ],
   theme: {
     font: {
       trajan: ['TrajanPro', 'serif'],

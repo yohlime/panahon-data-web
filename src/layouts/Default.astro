@@ -1,5 +1,6 @@
 ---
 import NavBar from '@/components/NavBar.vue'
+import SideBar from '@/components/SideBar.vue'
 ---
 
 <!doctype html>
@@ -14,8 +15,11 @@ import NavBar from '@/components/NavBar.vue'
     <div class="flex justify-center items-center">
       <div class="max-w-screen-2xl flex flex-col w-full select-none h-screen">
         <NavBar client:load />
-        <div class="bg-gray-200 text-gray-800 flex-1 overflow-y-auto">
-          <slot />
+        <div class="flex flex-1 min-h-0">
+          <SideBar client:load />
+          <div class="bg-gray-200 text-gray-800 flex-1 overflow-y-auto">
+            <slot />
+          </div>
         </div>
       </div>
     </div>

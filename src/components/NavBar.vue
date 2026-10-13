@@ -1,7 +1,10 @@
 <template>
   <header>
     <nav class="flex justify-between items-center bg-white md:new-navbar p-4">
-      <div class="hidden md:flex flex-col items-center">
+      <div class="flex items-center gap-2">
+        <button class="p-2 text-gray-700 md:hidden" aria-label="Open menu" @click="openMobileNav">
+          <div class="i-mdi:menu text-2xl"></div>
+        </button>
         <h1 class="font-trajan text-xl md:text-2xl tracking-3px">Panahon</h1>
       </div>
       <div class="flex flex-col items-center">
@@ -25,29 +28,6 @@
               v-show="showSettings"
               class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
             >
-              <a
-                :href="route('observations')"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                @click="showSettings = false"
-              >
-                Observations
-              </a>
-              <a
-                v-if="isSuperAdmin"
-                :href="route('users')"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                @click="showSettings = false"
-              >
-                Users
-              </a>
-              <a
-                v-if="isSuperAdmin"
-                :href="route('roles')"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                @click="showSettings = false"
-              >
-                Roles
-              </a>
               <a
                 :href="route('settings/api-keys')"
                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -111,7 +91,8 @@
 
   import { $activeRoute, route } from '@/stores/routes'
   import { $page as $stnPage, $perPage as $stnPerPage } from '@/stores/station'
-  import { $isLoggedIn, $isSuperAdmin, fetchAuthUser, logout } from '@/stores/user'
+  import { $isLoggedIn, fetchAuthUser, logout } from '@/stores/user'
+  import { setMobileNavOpen } from '@/stores/ui'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
 
@@ -119,7 +100,6 @@
   import SignupForm from '@/components/form/SignUp.vue'
 
   const isLoggedIn = useStore($isLoggedIn)
-  const isSuperAdmin = useStore($isSuperAdmin)
   const activeRoute = useStore($activeRoute)
   const stnPage = useStore($stnPage)
   const stnPerPage = useStore($stnPerPage)
@@ -152,6 +132,8 @@
     signupDialog.value = false
     showDialog.value = true
   }
+
+  const openMobileNav = () => setMobileNavOpen(true)
 
   const showSignUp = () => {
     loginDialog.value = false
