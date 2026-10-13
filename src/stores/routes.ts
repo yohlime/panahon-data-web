@@ -53,7 +53,7 @@ const routes: Route[] = [
     icon: 'mdi-key-chain',
     group: 'settings',
   },
-  { name: 'requests', title: 'API Requests', to: route('requests'), icon: 'mdi-clipboard-check', group: 'settings' },
+  { name: 'requests', title: 'API Requests', to: route('settings/requests'), icon: 'mdi-clipboard-check', group: 'settings' },
   { name: 'users', title: 'Users', to: route('users'), icon: 'mdi-account', group: 'settings' },
   { name: 'roles', title: 'Roles', to: route('roles'), icon: 'mdi-account-badge', group: 'settings' },
 ]
