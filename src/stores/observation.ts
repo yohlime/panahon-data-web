@@ -3,13 +3,10 @@ import { atom } from 'nanostores'
 import axios from '@/utils/axios'
 
 import {
-  createStationObsArgsSchema,
   latestObservationSchema,
   paginatedStationObservationSchema,
   stationObservationSchema,
-  updateStationObsArgsSchema,
 } from '@/schemas/observation'
-import type { CreateStationObsReq, UpdateStationObsReq } from '@/types/observation'
 
 const baseUrl = '/observations'
 
@@ -18,6 +15,13 @@ export const $perPage = atom(100)
 
 export const listObservations = async () => {
   const { data } = await axios.get(`${baseUrl}?page=${$page.get()}&per_page=${$perPage.get()}`)
+  return paginatedStationObservationSchema.parse(data)
+}
+
+// Reads a single station's records via the public /observations?station_ids= list
+// (the /stations/:id/observations routes require an API token, not cookie auth).
+export const listStationRecords = async (stationID: number, page = 1, perPage = 10) => {
+  const { data } = await axios.get(`${baseUrl}?station_ids=${stationID}&page=${page}&per_page=${perPage}`)
   return paginatedStationObservationSchema.parse(data)
 }
 
@@ -39,20 +43,4 @@ export const getStationObservation = async (stationID: number, id: number) => {
 export const getLatestStationObservation = async (stationID: number) => {
   const { data } = await axios.get(`/stations/${stationID}/observations/latest`)
   return latestObservationSchema.parse(data)
-}
-
-export const createStationObservation = async (stationID: number, args: CreateStationObsReq) => {
-  const parsed = createStationObsArgsSchema.parse(args)
-  const { data } = await axios.post(`/stations/${stationID}/observations`, parsed)
-  return stationObservationSchema.parse(data)
-}
-
-export const updateStationObservation = async (stationID: number, args: UpdateStationObsReq) => {
-  const parsed = updateStationObsArgsSchema.parse(args)
-  const { data } = await axios.put(`/stations/${stationID}/observations/${parsed.id}`, parsed)
-  return stationObservationSchema.parse(data)
-}
-
-export const deleteStationObservation = async (stationID: number, id: number) => {
-  await axios.delete(`/stations/${stationID}/observations/${id}`)
 }

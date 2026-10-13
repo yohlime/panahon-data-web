@@ -50,30 +50,3 @@ export const latestObservationSchema = z.object({
   address: z.string().nullish(),
   obs: latestObsSchema,
 })
-
-const stationObsBaseSchema = z.object({
-  pres: z.coerce.number().optional(),
-  rr: z.coerce.number().optional(),
-  rh: z.coerce.number().optional(),
-  temp: z.coerce.number().optional(),
-  td: z.coerce.number().optional(),
-  wdir: z.coerce.number().optional(),
-  wspd: z.coerce.number().optional(),
-  wspdx: z.coerce.number().optional(),
-  srad: z.coerce.number().optional(),
-  mslp: z.coerce.number().optional(),
-  hi: z.coerce.number().optional(),
-  wchill: z.coerce.number().optional(),
-  timestamp: z.string().min(1),
-})
-
-export const createStationObsArgsSchema = stationObsBaseSchema.extend({
-  station_id: z.number(),
-  qc_level: z.coerce.number().optional(),
-})
-
-export const updateStationObsArgsSchema = stationObsBaseSchema.extend({
-  id: z.number(),
-  station_id: z.number(),
-  qc_level: z.coerce.number().optional(),
-})
