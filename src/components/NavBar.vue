@@ -111,7 +111,7 @@
 
   import { $activeRoute, route } from '@/stores/routes'
   import { $page as $stnPage, $perPage as $stnPerPage } from '@/stores/station'
-  import { $isLoggedIn, $isSuperAdmin, getUser, logout } from '@/stores/user'
+  import { $isLoggedIn, $isSuperAdmin, fetchAuthUser, logout } from '@/stores/user'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
 
@@ -133,10 +133,8 @@
 
   useQuery({
     queryKey: ['auth', 'user'],
-    queryFn: async () => {
-      const user = await getUser()
-      return user ?? {}
-    },
+    queryFn: fetchAuthUser,
+    staleTime: 5 * 60 * 1000,
   })
 
   const { mutate: handleLogout } = useMutation({

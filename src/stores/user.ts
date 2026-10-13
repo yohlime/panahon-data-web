@@ -26,6 +26,9 @@ export const getUser = async () => {
   }
 }
 
+// Shared query fn for the ['auth','user'] Vue Query cache.
+export const fetchAuthUser = async () => (await getUser()) ?? null
+
 export const login = async (loginArgs: UserLoginArgs) => {
   try {
     await axios.post(`${baseUrl}/login`, loginArgs)
@@ -48,7 +51,10 @@ export const logout = async () => {
 export const register = async (registerArgs: UserRegisterArgs) => {
   try {
     const { status } = await axios.post(`${baseUrl}/register`, registerArgs)
-    return status >= 200 && status < 300
+    if (status < 200 || status >= 300) return false
+    // Registration does not open a session, so log in to gain authentication.
+    await login({ username: registerArgs.username, password: registerArgs.password })
+    return true
   } catch (err) {
     return false
   }
