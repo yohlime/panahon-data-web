@@ -5,7 +5,7 @@
     class="hidden md:flex flex-col shrink-0 bg-white border-r border-gray-200 transition-[width] duration-200"
     :class="expanded ? 'w-52' : 'w-14'"
   >
-    <SideBarLinks :expanded="expanded" />
+    <SideBarLinks :expanded="expanded" :group="group" :active-name="activeName" />
     <CollapsibleTrigger as-child>
       <button
         class="m-2 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
@@ -25,7 +25,7 @@
         :aria-describedby="undefined"
       >
         <DialogTitle class="mb-4 text-lg font-bold text-gray-900">Menu</DialogTitle>
-        <SideBarLinks @navigate="setMobileNavOpen(false)" />
+        <SideBarLinks :group="group" :active-name="activeName" @navigate="setMobileNavOpen(false)" />
         <DialogClose
           class="absolute right-4 top-4 rounded-full p-1 text-gray-500 hover:bg-gray-100"
           aria-label="Close menu"
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-  import { onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { useStore } from '@nanostores/vue'
   import {
     CollapsibleRoot,
@@ -56,14 +56,21 @@
 
   import SideBarLinks from '@/components/SideBarLinks.vue'
 
+  const props = withDefaults(defineProps<{ path?: string }>(), { path: '/' })
+
   const routes = useStore($routes)
   const open = useStore($mobileNavOpen)
 
   const expanded = ref(true)
 
+  const normalize = (p: string) => (p.length > 1 ? p.replace(/\/$/, '') : p)
+  const current = computed(() => normalize(props.path))
+
+  const activeRoute = computed(() => routes.value.filter((r) => r.visible).find((r) => normalize(r.to) === current.value))
+  const group = computed(() => activeRoute.value?.group ?? (current.value.startsWith('/settings') ? 'settings' : 'main'))
+  const activeName = computed(() => activeRoute.value?.name ?? '')
+
   onMounted(() => {
-    const path = window.location.pathname.replace(/\/$/, '')
-    const match = routes.value.filter((r) => r.visible).find((r) => r.to.replace(/\/$/, '') === path)
-    if (match) setActiveRoute(match)
+    if (activeRoute.value) setActiveRoute(activeRoute.value)
   })
 </script>
