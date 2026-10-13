@@ -1,5 +1,3 @@
-import { atom } from 'nanostores'
-
 import axios from '@/utils/axios'
 
 import {
@@ -8,30 +6,13 @@ import {
   stationObservationSchema,
 } from '@/schemas/observation'
 
-const baseUrl = '/observations'
-
-export const $page = atom(1)
-export const $perPage = atom(100)
-
-export const listObservations = async () => {
-  const { data } = await axios.get(`${baseUrl}?page=${$page.get()}&per_page=${$perPage.get()}`)
-  return paginatedStationObservationSchema.parse(data)
-}
-
-// Reads a single station's records via the public /observations?station_ids= list
-// (the /stations/:id/observations routes require an API token, not cookie auth).
-export const listStationRecords = async (stationID: number, page = 1, perPage = 10) => {
-  const { data } = await axios.get(`${baseUrl}?station_ids=${stationID}&page=${page}&per_page=${perPage}`)
-  return paginatedStationObservationSchema.parse(data)
-}
-
 export const listLatestObservations = async () => {
-  const { data } = await axios.get(`${baseUrl}/latest`)
+  const { data } = await axios.get('/observations/latest')
   return latestObservationSchema.array().parse(data)
 }
 
-export const listStationObservations = async (stationID: number) => {
-  const { data } = await axios.get(`/stations/${stationID}/observations`)
+export const listStationObservations = async (stationID: number, page = 1, perPage = 10) => {
+  const { data } = await axios.get(`/stations/${stationID}/observations?page=${page}&per_page=${perPage}`)
   return paginatedStationObservationSchema.parse(data)
 }
 

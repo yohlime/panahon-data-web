@@ -29,7 +29,7 @@
   import { computed, ref } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
 
-  import { listStationRecords } from '@/stores/observation'
+  import { listStationObservations } from '@/stores/observation'
   import type { StationObservation } from '@/types/observation'
 
   import Table from '@/components/ui/Table.vue'
@@ -46,7 +46,7 @@
 
   const { isLoading, data } = useQuery({
     queryKey: ['stations', stationID, 'records', { page, perPage }],
-    queryFn: () => listStationRecords(stationID, page.value, perPage.value),
+    queryFn: () => listStationObservations(stationID, page.value, perPage.value),
   })
 
   const items = computed(() => data.value?.items ?? [])
