@@ -12,13 +12,13 @@
     "test:unit": "vitest"
   },
   "dependencies": {
-    "@astrojs/node": "^9.5.4",
-    "@astrojs/vue": "^5.1.4",
+    "@astrojs/node": "^11.1.7",
+    "@astrojs/vue": "^7.0.3",
     "@nanostores/vue": "^1.1.0",
     "@tanstack/vue-query": "^5.90.5",
     "@tanstack/vue-table": "^8.21.3",
     "@vee-validate/zod": "^4.14.7",
-    "astro": "^5.18.0",
+    "astro": "^7.3.8",
     "axios": "^1.7.9",
     "date-fns": "^2.30.0",
     "nanostores": "^1.1.1",
