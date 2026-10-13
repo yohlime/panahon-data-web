@@ -9,17 +9,19 @@
     };
   };
 
-  # Load BACKEND_URL (used by the readiness check below) from the env file `astro dev` uses.
-  dotenv.enable = true;
-  dotenv.filename = ".env.development";
-
   enterShell = ''
     pnpm --version
   '';
 
   # The backend must be up before the dev server starts. Runs on devenv up.
+  # BACKEND_URL is read from .env.development inside this task only, so the
+  # shell env is not polluted with APP_HOST/PUBLIC_PANAHON_API (Vite lets
+  # process.env override the .env files, which would break the dev bind/base).
   tasks."backend:wait" = {
     exec = ''
+      set -a
+      . ./.env.development
+      set +a
       : "''${BACKEND_URL:?BACKEND_URL is not set in .env.development}"
       until curl -s -o /dev/null --max-time 2 "$BACKEND_URL"; do
         echo "Waiting for backend on $BACKEND_URL ..."

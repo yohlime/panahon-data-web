@@ -7,14 +7,16 @@ import vue from '@astrojs/vue'
 import UnoCSS from 'unocss/astro'
 import mkcert from 'vite-plugin-mkcert'
 
-const { APP_HOST, APP_PORT, APP_SITE, APP_BASE, BACKEND_URL } = loadEnv(process.env.NODE_ENV, process.cwd(), '')
+const { APP_PORT, APP_SITE, APP_BASE, BACKEND_URL } = loadEnv(process.env.NODE_ENV, process.cwd(), '')
 const basePath = `${(APP_BASE ?? '/').replace(/\/$/, '')}/`
 
 // https://astro.build/config
 export default defineConfig({
   server: {
-    host: APP_HOST,
-    port: +APP_PORT,
+    // Bind every interface (localhost + LAN IP) to match the Docker deployment,
+    // instead of a single configured host.
+    host: true,
+    port: +(APP_PORT ?? 4321),
   },
   site: APP_SITE,
   base: basePath,
