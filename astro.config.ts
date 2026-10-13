@@ -7,7 +7,7 @@ import vue from '@astrojs/vue'
 import UnoCSS from 'unocss/astro'
 import mkcert from 'vite-plugin-mkcert'
 
-const { APP_HOST, APP_PORT, APP_SITE, APP_BASE } = loadEnv(process.env.NODE_ENV, process.cwd(), '')
+const { APP_HOST, APP_PORT, APP_SITE, APP_BASE, BACKEND_URL } = loadEnv(process.env.NODE_ENV, process.cwd(), '')
 const basePath = `${(APP_BASE ?? '/').replace(/\/$/, '')}/`
 
 // https://astro.build/config
@@ -27,9 +27,7 @@ export default defineConfig({
   vite: {
     plugins: [mkcert()],
     server: {
-      proxy: {
-        '/api/v1': `http://${APP_HOST}:3000/`,
-      },
+      proxy: BACKEND_URL ? { '/api/v1': `${BACKEND_URL}/` } : {},
     },
   },
   output: 'server',
