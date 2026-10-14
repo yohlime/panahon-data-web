@@ -7,7 +7,7 @@ import Table from '@/components/roles/Table.vue'
 
 <DefaultLayout>
   <div class="p-4">
-    <Guard client:load :roles="['SUPERADMIN']" />
+    <Guard client:load :roles="['SUPERADMIN', 'ADMIN']" />
     <h1 class="text-2xl font-bold mb-4">Roles</h1>
     <Table client:load />
   </div>

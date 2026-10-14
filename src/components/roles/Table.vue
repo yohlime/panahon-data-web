@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-end">
+    <div v-if="isSuperAdmin" class="flex justify-end">
       <Button @click="showCreateDialog = true">
         <div class="i-mdi:plus"></div>
         Create Role
@@ -11,7 +11,7 @@
       v-if="!isLoading && data"
       :data="items"
       :columns="columns"
-      :show-actions="{ edit: true, delete: true }"
+      :show-actions="{ edit: isSuperAdmin, delete: isSuperAdmin }"
       @delete-item="handleDelete"
     >
       <template #edit-form="{ itemID, close }"><Form :itemID="itemID" @close="close" @success="handleSuccess" /></template>
@@ -44,10 +44,11 @@
 
 <script setup lang="ts">
   import { computed, ref, watchEffect } from 'vue'
-  import { useVModel } from '@nanostores/vue'
+  import { useStore, useVModel } from '@nanostores/vue'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
 
   import { $page, $perPage, listRoles, deleteRole } from '@/stores/role'
+  import { $isSuperAdmin } from '@/stores/user'
   import type { Role } from '@/types/role'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
@@ -58,6 +59,8 @@
 
   const page = useVModel($page)
   const perPage = useVModel($perPage)
+
+  const isSuperAdmin = useStore($isSuperAdmin)
 
   const queryClient = useQueryClient()
 

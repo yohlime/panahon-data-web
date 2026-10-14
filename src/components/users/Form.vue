@@ -45,18 +45,23 @@
 
 <script setup lang="ts">
   import { computed, toRefs } from 'vue'
+  import { useStore } from '@nanostores/vue'
   import { useQuery, useMutation } from '@tanstack/vue-query'
   import { useForm } from 'vee-validate'
   import { toTypedSchema } from '@vee-validate/zod'
 
-  import { createUser, getUserByID, updateUser } from '@/stores/user'
+  import { $isSuperAdmin, createUser, getUserByID, updateUser } from '@/stores/user'
   import { createUserArgsSchema, updateUserArgsSchema } from '@/schemas/user'
   import type { CreateUserReq, User } from '@/types/user'
 
   import Input from '@/components/ui/Input.vue'
   import Button from '@/components/ui/Button.vue'
 
-  const roleOptions = ['USER', 'ADMIN', 'SUPERADMIN']
+  // Only a superadmin may grant the SUPERADMIN role.
+  const isSuperAdmin = useStore($isSuperAdmin)
+  const roleOptions = computed(() =>
+    isSuperAdmin.value ? ['USER', 'ADMIN', 'SUPERADMIN'] : ['USER', 'ADMIN'],
+  )
 
   const props = withDefaults(defineProps<{ itemID?: number }>(), { itemID: 0 })
 
