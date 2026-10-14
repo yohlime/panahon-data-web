@@ -1,7 +1,15 @@
 <template>
   <div class="flex flex-col gap-6 w-full max-w-3xl">
-    <section class="bg-white rounded-lg p-4 shadow-sm">
-      <h2 class="text-lg font-semibold mb-2">Current access</h2>
+    <section v-if="isAdmin" class="bg-white rounded-lg p-4 shadow-sm">
+      <h2 class="text-lg font-semibold mb-2">API access</h2>
+      <p class="text-sm text-gray-600">
+        As an admin you have unrestricted API access across all stations, variables and history — no request is needed.
+      </p>
+    </section>
+
+    <template v-else>
+      <section class="bg-white rounded-lg p-4 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">Current access</h2>
       <div v-if="isLoading" class="text-gray-500">Loading…</div>
       <dl v-else-if="access" class="grid grid-cols-2 gap-2 text-sm">
         <dt class="text-gray-500">Stations</dt>
@@ -67,12 +75,14 @@
           </button>
         </li>
       </ul>
-    </section>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
   import { reactive } from 'vue'
+  import { useStore } from '@nanostores/vue'
   import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
   import {
@@ -81,6 +91,7 @@
     getMyAccess,
     listMyAccessRequests,
   } from '@/stores/access'
+  import { $isAdmin } from '@/stores/user'
   import { ACCESS_VARIABLES } from '@/schemas/access'
   import type { AccessRequest } from '@/types/access'
 
@@ -88,6 +99,7 @@
   import Button from '@/components/ui/Button.vue'
 
   const queryClient = useQueryClient()
+  const isAdmin = useStore($isAdmin)
 
   const { isLoading, data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess })
   const { data: requests } = useQuery({ queryKey: ['access', 'me', 'requests'], queryFn: listMyAccessRequests })
