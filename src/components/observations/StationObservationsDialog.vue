@@ -30,6 +30,7 @@
   import { useQuery } from '@tanstack/vue-query'
 
   import { listStationObservations } from '@/stores/observation'
+  import { getMyAccess } from '@/stores/access'
   import type { StationObservation } from '@/types/observation'
 
   import Table from '@/components/ui/Table.vue'
@@ -49,51 +50,63 @@
     queryFn: () => listStationObservations(stationID, page.value, perPage.value),
   })
 
+  const { data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess })
+
   const items = computed(() => data.value?.items ?? [])
 
   const num = (v: number | null | undefined, d = 1) => (v === null || v === undefined ? '—' : v.toFixed(d))
   const dt = (v: Date | string) => new Date(v).toLocaleString()
 
-  const columns = [
-    {
-      id: 'timestamp',
-      header: 'Timestamp',
-      cell: ({ row }: { row: { original: StationObservation } }) => dt(row.original.timestamp),
-    },
-    {
-      id: 'temp',
-      header: 'Temp (°C)',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.temp),
-    },
-    {
-      id: 'rh',
-      header: 'RH (%)',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.rh),
-    },
-    {
-      id: 'pres',
-      header: 'Pres (hPa)',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.pres),
-    },
-    {
-      id: 'wspd',
-      header: 'Wind (m/s)',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.wspd, 2),
-    },
-    {
-      id: 'wdir',
-      header: 'Dir',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.wdir, 0),
-    },
-    {
-      id: 'rr',
-      header: 'Rain',
-      cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.rr, 2),
-    },
-    {
-      id: 'qcLevel',
-      header: 'QC',
-      cell: ({ row }: { row: { original: StationObservation } }) => row.original.qc_level,
-    },
-  ]
+  const canSee = (name: string) => {
+    const vars = access.value?.variables
+    if (vars === undefined) return false
+    if (vars === null) return true
+    return vars.includes(name)
+  }
+
+  const columns = computed(() => {
+    const cols = [
+      {
+        id: 'timestamp',
+        header: 'Timestamp',
+        cell: ({ row }: { row: { original: StationObservation } }) => dt(row.original.timestamp),
+      },
+    ]
+    if (canSee('temp')) {
+      cols.push({
+        id: 'temp',
+        header: 'Temperature (°C)',
+        cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.temp),
+      })
+    }
+    if (canSee('rain')) {
+      cols.push({
+        id: 'rain',
+        header: 'Rain (mm)',
+        cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.rr, 2),
+      })
+    }
+    if (canSee('pres')) {
+      cols.push({
+        id: 'pres',
+        header: 'Pressure (hPa)',
+        cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.pres),
+      })
+    }
+    if (canSee('wind')) {
+      cols.push(
+        {
+          id: 'wspd',
+          header: 'Wind Speed (m/s)',
+          cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.wspd, 2),
+        },
+        {
+          id: 'wdir',
+          header: 'Wind Direction (°)',
+          cell: ({ row }: { row: { original: StationObservation } }) => num(row.original.wdir, 0),
+        },
+      )
+    }
+    return cols
+  })
 </script>
