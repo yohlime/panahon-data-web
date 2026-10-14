@@ -34,7 +34,7 @@ describe('$routes', () => {
 
   describe('$activeRoute', () => {
     test('default', ({ expect }) => {
-      const defaultRoute = $routes.get().find(({ name }) => name === 'index')
+      const [defaultRoute] = $routes.get()
       expect($activeRoute.get()).toEqual(defaultRoute)
     })
 

@@ -20,27 +20,11 @@ export type Route = {
 
 const routes: Route[] = [
   {
-    name: 'index',
-    title: 'Dashboard',
-    to: route(),
-    visible: true,
-    icon: 'mdi-view-dashboard',
-    group: 'main',
-  },
-  {
     name: 'stations',
     title: 'Weather Stations',
     to: route('stations'),
     visible: true,
     icon: 'mdi-weather-pouring',
-    group: 'main',
-  },
-  {
-    name: 'observations',
-    title: 'Observations',
-    to: route('observations'),
-    visible: true,
-    icon: 'mdi-weather-partly-rainy',
     group: 'main',
   },
   { name: 'simcard', title: 'SIM Card', to: route('simcard'), visible: false, icon: 'mdi-sim', group: 'main' },

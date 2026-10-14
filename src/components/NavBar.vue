@@ -5,7 +5,7 @@
         <button class="p-2 text-gray-700 md:hidden" aria-label="Open menu" @click="openMobileNav">
           <div class="i-mdi:menu text-2xl"></div>
         </button>
-        <h1 class="font-trajan text-xl md:text-2xl tracking-3px">Panahon</h1>
+        <a :href="route()" class="font-trajan text-xl md:text-2xl tracking-3px">Panahon</a>
       </div>
       <div class="flex flex-col items-center">
         <ul>

@@ -1,5 +1,9 @@
 ---
 import DefaultLayout from '@/layouts/Default.astro'
+
+import Dashboard from '@/components/dashboard/Dashboard.vue'
 ---
 
-<DefaultLayout>Home</DefaultLayout>
+<DefaultLayout>
+  <Dashboard client:load />
+</DefaultLayout>
