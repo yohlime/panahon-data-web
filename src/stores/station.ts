@@ -38,7 +38,7 @@ export const $page = atom(1)
 export const $perPage = atom(10)
 
 export const listStations = async () => {
-  const url = `${baseURL}?page=${$page.get()}&per_page=${$perPage.get()}`
+  const url = `${baseURL}?page=${$page.get()}&per_page=${$perPage.get()}&accessible=true`
   const { data } = await axios.get(url)
   const s = paginatedStationSchema.parse(data)
   return s
