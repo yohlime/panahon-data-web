@@ -1,10 +1,11 @@
 <template>
-  <div>
+  <div :class="{ 'opacity-50 pointer-events-none': disabled }">
     <NumberFieldRoot
       v-model="model"
       :id="name"
       :min="min"
       :max="max"
+      :disabled="disabled"
       :default-value="defaultValue"
       :step="step"
       :format-options="formatOptions"
@@ -40,6 +41,7 @@
       min?: number
       max?: number
       step?: number
+      disabled?: boolean
       formatOptions?: any
     }>(),
     {
@@ -48,6 +50,7 @@
       errorMessage: '',
       defaultValue: 0,
       step: 1,
+      disabled: false,
       formatOptions: {
         signDisplay: 'exceptZero',
       },

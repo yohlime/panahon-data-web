@@ -1,90 +1,157 @@
-<template>
-  <div>
-    <label :for="name" class="block mb-1 text-sm font-medium text-gray-900 dark:text-white"><slot /></label>
-    <SelectRoot v-model="modelValue">
-      <SelectTrigger
-        class="w-full inline-flex items-center justify-between rounded-lg p-4 leading-none bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-600 focus:border-blue-600 outline-none"
-        aria-label="Customise options"
-      >
-        <SelectValue :placeholder="placeholder" />
-        <div class="i-mdi:chevron-down h-3.5 w-3.5" />
-      </SelectTrigger>
+<script lang="ts">
+  export const MULTISELECT_ALL = '__all__'
 
-      <SelectPortal>
-        <SelectContent
-          class="bg-white rounded-lg border shadow-sm will-change-[opacity,transform] data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade z-[100]"
-          :side-offset="5"
-        >
-          <SelectScrollUpButton class="flex items-center justify-center h-4 bg-white text-gray-800 cursor-default">
-            <div class="i-mdi:chevron-up" />
-          </SelectScrollUpButton>
+  export type SelectOption =
+    | string
+    | number
+    | { value: string | number; label?: string; text?: string; disabled?: boolean }
+</script>
 
-          <SelectViewport class="p-1">
-            <SelectItem
-              v-for="(option, index) in options"
-              :key="index"
-              class="text-xs leading-none text-gray-700 rounded-sm flex items-center h-6 pr-2.5 pl-4.5 relative select-none data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-500 data-[highlighted]:text-blue-100"
-              :value="getValue(option)"
-              :disabled="isDisabled(option)"
-            >
-              <SelectItemIndicator class="absolute left-0 w-4 inline-flex items-center justify-center">
-                <div class="i-mdi:check" />
-              </SelectItemIndicator>
-              <SelectItemText>
-                {{ getText(option) }}
-              </SelectItemText>
-            </SelectItem>
-          </SelectViewport>
+<script setup lang="ts">
+  import { computed, ref } from 'vue'
+  import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 
-          <SelectScrollDownButton class="flex items-center justify-center h-4 bg-white text-gray-800 cursor-default">
-            <div class="i-mdi:chevron-down" />
-          </SelectScrollDownButton>
-        </SelectContent>
-      </SelectPortal>
-    </SelectRoot>
-  </div>
-</template>
-
-<script setup lang="ts" generic="T extends Option">
-  import {
-    SelectContent,
-    SelectItem,
-    SelectItemIndicator,
-    SelectItemText,
-    SelectPortal,
-    SelectRoot,
-    SelectScrollDownButton,
-    SelectScrollUpButton,
-    SelectTrigger,
-    SelectValue,
-    SelectViewport,
-  } from 'reka-ui'
-
-  export type Option = string | number | { value: string | number; text: string; disabled?: boolean }
-
-  withDefaults(
+  const props = withDefaults(
     defineProps<{
-      name: string
-      options: T[]
+      name?: string
+      options: SelectOption[]
       placeholder?: string
+      multiple?: boolean
+      allLabel?: string
+      locked?: (string | number)[]
+      errorMessage?: string
     }>(),
-    {
-      placeholder: 'Select an item',
-    },
+    { name: '', placeholder: 'Select…', multiple: false, allLabel: '', locked: () => [], errorMessage: '' },
   )
 
-  const modelValue = defineModel<string | number>()
+  const model = defineModel<string | number | (string | number)[]>()
 
-  const getText = (opt: T) => {
-    if (typeof opt === 'string') {
-      return opt
-    } else if (typeof opt === 'number') {
-      return `${opt}`
+  const open = ref(false)
+  const query = ref('')
+
+  const normalized = computed(() =>
+    props.options.map((o) =>
+      typeof o === 'string' || typeof o === 'number'
+        ? { value: o, label: String(o), disabled: false }
+        : { value: o.value, label: o.label ?? o.text ?? String(o.value), disabled: o.disabled ?? false },
+    ),
+  )
+
+  const selectedArray = computed(() => (Array.isArray(model.value) ? model.value : []))
+  const allChecked = computed(() => props.multiple && selectedArray.value.includes(MULTISELECT_ALL))
+
+  const selectedLabel = computed(() => {
+    if (props.multiple) return ''
+    return normalized.value.find((o) => o.value === model.value)?.label ?? ''
+  })
+
+  const filtered = computed(() => {
+    const q = query.value.trim().toLowerCase()
+    return q ? normalized.value.filter((o) => o.label.toLowerCase().includes(q)) : normalized.value
+  })
+
+  const labelFor = (value: string | number) =>
+    value === MULTISELECT_ALL
+      ? props.allLabel || 'All'
+      : (normalized.value.find((o) => o.value === value)?.label ?? String(value))
+
+  const isSelected = (value: string | number) => (props.multiple ? allChecked.value || selectedArray.value.includes(value) : model.value === value)
+
+  const toggle = (value: string | number) => {
+    const current = selectedArray.value
+    if (allChecked.value) {
+      model.value = normalized.value.map((o) => o.value).filter((v) => v !== value)
+      return
     }
-    return opt.text
+    model.value = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
   }
 
-  const getValue = (opt: T) => (typeof opt === 'string' || typeof opt === 'number' ? opt : opt.value)
+  const toggleAll = () => {
+    model.value = allChecked.value ? [...props.locked] : [MULTISELECT_ALL]
+  }
 
-  const isDisabled = (opt: T) => (typeof opt === 'string' || typeof opt === 'number' ? false : (opt?.disabled ?? false))
+  const remove = (value: string | number) => {
+    model.value = value === MULTISELECT_ALL ? [...props.locked] : selectedArray.value.filter((v) => v !== value)
+  }
+
+  const onRowClick = (value: string | number) => {
+    if (props.multiple) {
+      toggle(value)
+    } else {
+      model.value = value
+      open.value = false
+    }
+  }
 </script>
+
+<template>
+  <div>
+    <label v-if="$slots.default" :for="name" class="block mb-1 text-sm font-medium text-gray-900"><slot /></label>
+    <PopoverRoot v-model:open="open">
+      <PopoverTrigger as-child>
+        <button
+          type="button"
+          :id="name"
+          class="flex min-h-[42px] w-full flex-wrap items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-left focus:ring-2 focus:ring-blue-500"
+        >
+          <template v-if="multiple">
+            <span
+              v-for="val in selectedArray"
+              :key="val"
+              class="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800"
+            >
+              {{ labelFor(val) }}
+              <span role="button" aria-label="Remove" @click.stop="remove(val)">
+                <div class="i-mdi:close text-xs"></div>
+              </span>
+            </span>
+            <span v-if="!selectedArray.length" class="text-sm text-gray-400">{{ placeholder }}</span>
+          </template>
+          <span v-else :class="['text-sm', selectedLabel ? 'text-gray-900' : 'text-gray-400']">
+            {{ selectedLabel || placeholder }}
+          </span>
+          <div class="ml-auto text-gray-500">
+            <div class="i-mdi:chevron-down"></div>
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent
+          class="z-[100] mt-1 w-[var(--reka-popover-trigger-width)] rounded-lg border border-gray-200 bg-white p-1 shadow-md focus:outline-none"
+          :side-offset="4"
+        >
+          <input
+            v-model="query"
+            placeholder="Search…"
+            class="mb-1 w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-sm outline-none"
+          />
+          <div v-if="multiple && allLabel" class="mb-1 border-b border-gray-100 pb-1">
+            <div
+              class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+              @click="toggleAll"
+            >
+              <div class="w-4"><div v-show="allChecked" class="i-mdi:check"></div></div>
+              <span>{{ allLabel }}</span>
+            </div>
+          </div>
+          <div class="max-h-56 overflow-auto">
+            <div v-if="!filtered.length" class="px-2 py-1 text-sm text-gray-500">No results</div>
+            <div
+              v-for="opt in filtered"
+              :key="opt.value"
+              :class="[
+                'flex items-center gap-2 rounded px-2 py-1 text-sm',
+                opt.disabled ? 'cursor-not-allowed text-gray-400' : 'cursor-pointer text-gray-700 hover:bg-gray-100',
+              ]"
+              @click="!opt.disabled && onRowClick(opt.value)"
+            >
+              <div class="w-4"><div v-show="isSelected(opt.value)" class="i-mdi:check"></div></div>
+              <span>{{ opt.label }}</span>
+            </div>
+          </div>
+        </PopoverContent>
+      </PopoverPortal>
+    </PopoverRoot>
+    <p v-show="errorMessage" class="mt-2 text-sm text-red-600">{{ errorMessage }}</p>
+  </div>
+</template>

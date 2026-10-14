@@ -44,6 +44,12 @@ export const listStations = async () => {
   return s
 }
 
+// All stations (the list endpoint is public) for pickers.
+export const listAllStations = async () => {
+  const { data } = await axios.get(`${baseURL}?page=1&per_page=1000`)
+  return paginatedStationSchema.parse(data)
+}
+
 export const getStation = async (stnID?: number) => {
   if (stnID) {
     const url = `${baseURL}/${stnID}`
