@@ -32,12 +32,18 @@ export const accessRequestSchema = z.object({
 
 export const paginatedAccessRequestSchema = makePaginatedSchema(accessRequestSchema)
 
+// -1 means unlimited; otherwise at least one day (values above 365 are allowed).
+const maxDaysHistorySchema = z
+  .number()
+  .int()
+  .refine((v) => v === -1 || v >= 1, { message: 'History must be -1 (unlimited) or at least 1 day' })
+
 export const createAccessRequestArgsSchema = z.object({
   station_ids: z.number().array().optional(),
   all_stations: z.boolean().optional(),
   variables: z.string().array().optional(),
   all_variables: z.boolean().optional(),
-  max_days_history: z.number().min(1).max(365).optional(),
+  max_days_history: maxDaysHistorySchema.optional(),
   reason: z.string().optional(),
 })
 
@@ -46,5 +52,5 @@ export const updateUserAccessArgsSchema = z.object({
   all_stations: z.boolean().optional(),
   variables: z.string().array().optional(),
   all_variables: z.boolean().optional(),
-  max_days_history: z.number().min(1).max(365),
+  max_days_history: maxDaysHistorySchema,
 })

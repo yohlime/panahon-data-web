@@ -5,50 +5,32 @@
     </h1>
 
     <div v-if="isLoading" class="text-gray-500">Loading…</div>
-    <form v-else class="flex flex-col gap-3" @submit.prevent="handleSave">
-      <Input name="station-ids" v-model="form.stationIDs">Station IDs (comma-separated, empty = none)</Input>
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" v-model="form.allStations" /> All stations
-      </label>
-
-      <div>
-        <div class="text-sm font-medium text-gray-900 mb-1">Variables</div>
-        <div class="flex flex-wrap gap-3">
-          <label v-for="v in ACCESS_VARIABLES" :key="v" class="flex items-center gap-1 text-sm">
-            <input type="checkbox" :value="v" v-model="form.variables" /> {{ v }}
-          </label>
-        </div>
-        <label class="flex items-center gap-2 text-sm mt-2">
-          <input type="checkbox" v-model="form.allVariables" /> All variables
-        </label>
-      </div>
-
-      <Input name="max-days" type="number" v-model="form.maxDays">Max days history (1–365)</Input>
-
-      <div class="flex justify-end gap-2 mt-2">
-        <Button type="button" class="bg-gray-200 border border-gray-400 hover:bg-gray-300" @click="emit('close')"
-          >Cancel</Button
-        >
-        <Button
-          :is-pending="isPending"
-          class="text-gray-200 bg-blue-600 hover:bg-blue-700 focus:ring-blue-300"
-          @click.prevent="handleSave"
-          >Save</Button
-        >
-      </div>
-    </form>
+    <AccessForm
+      v-else
+      :station-options="stationOptions"
+      :variable-options="variableOptions"
+      :initial-stations="initialStations"
+      :initial-variables="initialVariables"
+      :initial-max-days="data?.max_days_history"
+      :is-pending="isPending"
+      submit-label="Save"
+      cancel-label="Cancel"
+      @submit="onSave"
+      @cancel="emit('close')"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { reactive, watch } from 'vue'
+  import { computed } from 'vue'
   import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
   import { getUserAccess, updateUserAccess } from '@/stores/access'
+  import { listAllStations } from '@/stores/station'
   import { ACCESS_VARIABLES } from '@/schemas/access'
 
-  import Input from '@/components/ui/Input.vue'
-  import Button from '@/components/ui/Button.vue'
+  import { MULTISELECT_ALL } from '@/components/ui/Select.vue'
+  import AccessForm, { type AccessFormValues } from '@/components/access/AccessForm.vue'
 
   const props = defineProps<{ userID: number }>()
   const emit = defineEmits<{ close: [] }>()
@@ -56,45 +38,31 @@
   const { userID } = props
   const queryClient = useQueryClient()
 
-  const form = reactive({
-    stationIDs: '',
-    allStations: false,
-    variables: [] as string[],
-    allVariables: false,
-    maxDays: '365',
-  })
-
   const { isLoading, data } = useQuery({
     queryKey: ['users', userID, 'access'],
     queryFn: () => getUserAccess(userID),
   })
+  const { data: stations } = useQuery({ queryKey: ['stations', 'all'], queryFn: listAllStations })
 
-  watch(data, (a) => {
-    if (!a) return
-    form.allStations = a.station_ids === null
-    form.stationIDs = a.station_ids && a.station_ids.length ? a.station_ids.join(', ') : ''
-    form.allVariables = a.variables === null
-    form.variables = a.variables ?? []
-    form.maxDays = String(a.max_days_history)
-  })
+  const stationOptions = computed(() => (stations.value?.items ?? []).map((s) => ({ value: s.id, label: s.name })))
+  const variableOptions = computed(() => ACCESS_VARIABLES.map((v) => ({ value: v, label: v })))
 
-  const parseIDs = (s: string) =>
-    s
-      .split(',')
-      .map((v) => v.trim())
-      .filter((v) => v !== '')
-      .map(Number)
-      .filter((v) => !Number.isNaN(v))
+  const initialStations = computed(() =>
+    data.value?.station_ids === null ? [MULTISELECT_ALL] : (data.value?.station_ids ?? []),
+  )
+  const initialVariables = computed(() =>
+    data.value?.variables === null ? [MULTISELECT_ALL] : (data.value?.variables ?? []),
+  )
 
   const { isPending, mutate } = useMutation({
     mutationKey: ['users', userID, 'access', 'update'],
-    mutationFn: () =>
+    mutationFn: (values: AccessFormValues) =>
       updateUserAccess(userID, {
-        all_stations: form.allStations,
-        station_ids: form.allStations ? undefined : parseIDs(form.stationIDs),
-        all_variables: form.allVariables,
-        variables: form.allVariables ? undefined : form.variables,
-        max_days_history: Number(form.maxDays) || 365,
+        all_stations: values.all_stations,
+        station_ids: values.station_ids,
+        all_variables: values.all_variables,
+        variables: values.variables,
+        max_days_history: values.max_days_history,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', userID, 'access'] })
@@ -102,5 +70,5 @@
     },
   })
 
-  const handleSave = () => mutate()
+  const onSave = (values: AccessFormValues) => mutate(values)
 </script>

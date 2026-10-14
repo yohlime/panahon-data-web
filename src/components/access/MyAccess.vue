@@ -23,47 +23,17 @@
 
       <section class="bg-white rounded-lg p-4 shadow-sm">
         <h2 class="text-lg font-semibold mb-3">Request additional access</h2>
-        <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
-          <Select
-            v-model="stationSelection"
-            :options="stationOptions"
-            multiple
-            all-label="All stations"
-            placeholder="Select stations…"
-            >Stations</Select
-          >
-          <div class="flex items-end gap-3">
-            <div class="w-1/3">
-              <Select name="max-days" v-model="maxDays" :options="maxDaysOptions">Max days of history</Select>
-            </div>
-            <div class="flex-1">
-              <Select
-                v-model="variableSelection"
-                :options="variableOptions"
-                multiple
-                all-label="All variables"
-                placeholder="Select variables…"
-                >Variables</Select
-              >
-            </div>
-          </div>
-          <Input name="reason" v-model="reason">Reason</Input>
-
-          <div class="flex justify-end">
-            <Button
-              :disabled="!meta.valid || !meta.dirty"
-              :is-pending="isPending"
-              :class="[
-                'text-gray-200',
-                meta.valid && meta.dirty
-                  ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300'
-                  : 'bg-blue-400 dark:bg-blue-500',
-              ]"
-              @click.prevent="onSubmit"
-              >Submit request</Button
-            >
-          </div>
-        </form>
+        <AccessForm
+          ref="formRef"
+          :station-options="stationOptions"
+          :variable-options="variableOptions"
+          :initial-max-days="access?.max_days_history"
+          :is-pending="isPending"
+          show-reason
+          require-dirty
+          submit-label="Submit request"
+          @submit="onRequest"
+        />
       </section>
 
       <section class="bg-white rounded-lg p-4 shadow-sm">
@@ -95,9 +65,6 @@
   import { computed, ref, watch } from 'vue'
   import { useStore } from '@nanostores/vue'
   import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-  import { useForm } from 'vee-validate'
-  import { toTypedSchema } from '@vee-validate/zod'
-  import { z } from 'zod'
 
   import { cancelAccessRequest, createAccessRequest, getMyAccess, listMyAccessRequests } from '@/stores/access'
   import { listAllStations } from '@/stores/station'
@@ -105,20 +72,7 @@
   import { ACCESS_VARIABLES } from '@/schemas/access'
   import type { AccessRequest, UserAccess } from '@/types/access'
 
-  import Input from '@/components/ui/Input.vue'
-  import Select, { MULTISELECT_ALL } from '@/components/ui/Select.vue'
-  import Button from '@/components/ui/Button.vue'
-
-  const maxDaysOptions = [
-    { value: 365, text: '1 year' },
-    { value: 730, text: '2 years' },
-    { value: 1095, text: '3 years' },
-    { value: 1825, text: '5 years' },
-    { value: 3650, text: '10 years' },
-    { value: -1, text: 'Unlimited' },
-  ]
-  const allowedMaxDays = maxDaysOptions.map((o) => o.value)
-  const normalizeMaxDays = (m?: number) => (m !== undefined && allowedMaxDays.includes(m) ? m : 365)
+  import AccessForm, { type AccessFormValues } from '@/components/access/AccessForm.vue'
 
   const queryClient = useQueryClient()
   const isAdmin = useStore($isAdmin)
@@ -126,6 +80,8 @@
   const { isLoading, data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess })
   const { data: requests } = useQuery({ queryKey: ['access', 'me', 'requests'], queryFn: listMyAccessRequests })
   const { data: stations } = useQuery({ queryKey: ['stations', 'all'], queryFn: listAllStations })
+
+  const formRef = ref<InstanceType<typeof AccessForm>>()
 
   const approvedStations = ref<(string | number)[]>([])
   const approvedVariables = ref<(string | number)[]>([])
@@ -142,62 +98,33 @@
     ACCESS_VARIABLES.filter((v) => !approvedVariables.value.includes(v)).map((v) => ({ value: v, label: v })),
   )
 
-  const value = z.union([z.string(), z.number()])
-  const { defineField, handleSubmit, meta, values, resetForm } = useForm({
-    validationSchema: toTypedSchema(
-      z.object({
-        stations: z.array(value),
-        variables: z.array(value),
-        maxDays: z.number(),
-        reason: z.string().optional(),
-      }),
-    ),
-    initialValues: { stations: [], variables: [], maxDays: 365, reason: '' },
-  })
-
-  const [stationSelection] = defineField('stations')
-  const [variableSelection] = defineField('variables')
-  const [maxDays] = defineField('maxDays')
-  const [reason] = defineField('reason')
-
-  const selectedIDs = (v: (string | number)[]) => v.filter((x) => x !== MULTISELECT_ALL)
-  const hasAll = (v: (string | number)[]) => v.includes(MULTISELECT_ALL)
-
-  const initialValues = (a?: UserAccess) => ({
-    stations: [] as (string | number)[],
-    variables: [] as (string | number)[],
-    maxDays: normalizeMaxDays(a?.max_days_history),
-    reason: '',
-  })
-
   watch(
     access,
     (a) => {
       approvedStations.value = a?.station_ids ?? []
       approvedVariables.value = a?.variables ?? []
-      resetForm({ values: initialValues(a) })
     },
     { immediate: true },
   )
 
   const { isPending, mutate } = useMutation({
     mutationKey: ['access', 'requests', 'create'],
-    mutationFn: () =>
+    mutationFn: (values: AccessFormValues) =>
       createAccessRequest({
-        all_stations: hasAll(values.stations ?? []),
-        station_ids: selectedIDs(values.stations ?? []).map(Number),
-        all_variables: hasAll(values.variables ?? []),
-        variables: selectedIDs(values.variables ?? []).map(String),
-        max_days_history: values.maxDays,
-        reason: values.reason ?? '',
+        all_stations: values.all_stations,
+        station_ids: values.station_ids,
+        all_variables: values.all_variables,
+        variables: values.variables,
+        max_days_history: values.max_days_history,
+        reason: values.reason,
       }),
     onSuccess: () => {
-      resetForm({ values: initialValues(access.value) })
+      formRef.value?.reset()
       queryClient.invalidateQueries({ queryKey: ['access', 'me', 'requests'] })
     },
   })
 
-  const onSubmit = handleSubmit(() => mutate())
+  const onRequest = (values: AccessFormValues) => mutate(values)
 
   const { mutate: doCancel } = useMutation({
     mutationKey: ['access', 'requests', 'cancel'],
