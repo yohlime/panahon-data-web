@@ -14,6 +14,8 @@ const baseUrl = '/users'
 
 export const $authUser = atom<User | undefined>(undefined)
 
+export const $authUserID = computed($authUser, (user) => user?.id)
+
 export const getUser = async () => {
   try {
     const { data } = await axios.get(`${baseUrl}/auth`)

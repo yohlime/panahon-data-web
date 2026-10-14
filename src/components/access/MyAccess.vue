@@ -66,19 +66,28 @@
   import { useStore } from '@nanostores/vue'
   import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
-  import { cancelAccessRequest, createAccessRequest, getMyAccess, listMyAccessRequests } from '@/stores/access'
+  import { cancelUserAccessRequest, createUserAccessRequest, getUserAccess, listUserAccessRequests } from '@/stores/access'
   import { listAllStations } from '@/stores/station'
-  import { $isAdmin } from '@/stores/user'
+  import { $authUserID, $isAdmin } from '@/stores/user'
   import { ACCESS_VARIABLES } from '@/schemas/access'
-  import type { AccessRequest, UserAccess } from '@/types/access'
+  import type { AccessRequest } from '@/types/access'
 
   import AccessForm, { type AccessFormValues } from '@/components/access/AccessForm.vue'
 
   const queryClient = useQueryClient()
   const isAdmin = useStore($isAdmin)
+  const userID = useStore($authUserID)
 
-  const { isLoading, data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess })
-  const { data: requests } = useQuery({ queryKey: ['access', 'me', 'requests'], queryFn: listMyAccessRequests })
+  const { isLoading, data: access } = useQuery({
+    queryKey: ['users', userID, 'access'],
+    queryFn: () => getUserAccess(userID.value!),
+    enabled: () => !!userID.value,
+  })
+  const { data: requests } = useQuery({
+    queryKey: ['users', userID, 'access-requests'],
+    queryFn: () => listUserAccessRequests(userID.value!),
+    enabled: () => !!userID.value,
+  })
   const { data: stations } = useQuery({ queryKey: ['stations', 'all'], queryFn: listAllStations })
 
   const formRef = ref<InstanceType<typeof AccessForm>>()
@@ -110,7 +119,7 @@
   const { isPending, mutate } = useMutation({
     mutationKey: ['access', 'requests', 'create'],
     mutationFn: (values: AccessFormValues) =>
-      createAccessRequest({
+      createUserAccessRequest(userID.value!, {
         all_stations: values.all_stations,
         station_ids: values.station_ids,
         all_variables: values.all_variables,
@@ -120,7 +129,7 @@
       }),
     onSuccess: () => {
       formRef.value?.reset()
-      queryClient.invalidateQueries({ queryKey: ['access', 'me', 'requests'] })
+      queryClient.invalidateQueries({ queryKey: ['users', userID.value, 'access-requests'] })
     },
   })
 
@@ -128,8 +137,8 @@
 
   const { mutate: doCancel } = useMutation({
     mutationKey: ['access', 'requests', 'cancel'],
-    mutationFn: cancelAccessRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['access', 'me', 'requests'] }),
+    mutationFn: (id: number) => cancelUserAccessRequest(userID.value!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', userID.value, 'access-requests'] }),
   })
 
   const describeStations = (ids: number[] | null) =>

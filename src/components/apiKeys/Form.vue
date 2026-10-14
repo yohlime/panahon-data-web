@@ -49,11 +49,13 @@
 </template>
 
 <script setup lang="ts">
+  import { useStore } from '@nanostores/vue'
   import { useMutation } from '@tanstack/vue-query'
   import { useForm } from 'vee-validate'
   import { toTypedSchema } from '@vee-validate/zod'
 
   import { createApiToken } from '@/stores/apiToken'
+  import { $authUserID } from '@/stores/user'
   import { createAPITokenArgsSchema } from '@/schemas/apiToken'
   import type { APITokenWithSecret, CreateAPITokenReq } from '@/types/apiToken'
 
@@ -66,13 +68,15 @@
     error: [err: Error]
   }>()
 
+  const userID = useStore($authUserID)
+
   const { defineField, meta, setValues, values } = useForm({
     validationSchema: toTypedSchema(createAPITokenArgsSchema),
   })
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['api-tokens', 'create'],
-    mutationFn: createApiToken,
+    mutationFn: (args: CreateAPITokenReq) => createApiToken(userID.value!, args),
     onSuccess: (d: APITokenWithSecret) => {
       emit('success', d)
     },

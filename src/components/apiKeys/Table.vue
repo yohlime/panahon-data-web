@@ -48,11 +48,13 @@
 
 <script setup lang="ts">
   import { ref, computed } from 'vue'
+  import { useStore } from '@nanostores/vue'
   import { formatRelative, parseISO } from 'date-fns'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
   import { createColumnHelper } from '@tanstack/vue-table'
 
   import { listApiTokens, deleteApiToken } from '@/stores/apiToken'
+  import { $authUserID } from '@/stores/user'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
   import Table from '@/components/ui/Table.vue'
@@ -63,10 +65,12 @@
   import type { APIToken, APITokenWithSecret } from '@/types/apiToken'
 
   const queryClient = useQueryClient()
+  const userID = useStore($authUserID)
 
   const { isLoading, data } = useQuery({
-    queryKey: ['api-tokens', 'list'],
-    queryFn: listApiTokens,
+    queryKey: ['users', userID, 'api-tokens'],
+    queryFn: () => listApiTokens(userID.value!),
+    enabled: () => !!userID.value,
   })
 
   const items = computed(() => data.value)
@@ -95,9 +99,9 @@
 
   const { mutate: handleDelete } = useMutation({
     mutationKey: ['api-tokens', 'delete'],
-    mutationFn: deleteApiToken,
+    mutationFn: (tokenId: number) => deleteApiToken(userID.value!, tokenId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-tokens', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['users', userID.value, 'api-tokens'] })
     },
     onError: (err) => {
       console.error(err)

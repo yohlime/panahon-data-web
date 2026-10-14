@@ -34,8 +34,8 @@
   import { listLatestObservations } from '@/stores/observation'
   import { listStations } from '@/stores/station'
   import { listApiTokens } from '@/stores/apiToken'
-  import { getMyAccess, listAccessRequests } from '@/stores/access'
-  import { $isLoggedIn, $isAdmin, $isSuperAdmin, listUsers } from '@/stores/user'
+  import { getUserAccess, listAccessRequests } from '@/stores/access'
+  import { $authUserID, $isLoggedIn, $isAdmin, $isSuperAdmin, listUsers } from '@/stores/user'
 
   import StatCard from '@/components/dashboard/StatCard.vue'
   import LatestTable from '@/components/observations/LatestTable.vue'
@@ -43,11 +43,20 @@
   const isLoggedIn = useStore($isLoggedIn)
   const isAdmin = useStore($isAdmin)
   const isSuperAdmin = useStore($isSuperAdmin)
+  const userID = useStore($authUserID)
 
   const { data: latest } = useQuery({ queryKey: ['observations', 'latest'], queryFn: listLatestObservations })
   const { data: stations } = useQuery({ queryKey: ['stations', 'accessible'], queryFn: listStations, enabled: isLoggedIn })
-  const { data: apiTokens } = useQuery({ queryKey: ['api-tokens', 'list'], queryFn: listApiTokens, enabled: isLoggedIn })
-  const { data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess, enabled: isLoggedIn })
+  const { data: apiTokens } = useQuery({
+    queryKey: ['users', userID, 'api-tokens'],
+    queryFn: () => listApiTokens(userID.value!),
+    enabled: () => !!userID.value,
+  })
+  const { data: access } = useQuery({
+    queryKey: ['users', userID, 'access'],
+    queryFn: () => getUserAccess(userID.value!),
+    enabled: () => !!userID.value,
+  })
   const { data: pending } = useQuery({
     queryKey: ['access-requests', 'pending'],
     queryFn: () => listAccessRequests('pending'),

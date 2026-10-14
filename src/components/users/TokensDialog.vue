@@ -43,7 +43,7 @@
   import { computed, ref } from 'vue'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
 
-  import { createUserApiToken, deleteUserApiToken, listUserApiTokens } from '@/stores/apiToken'
+  import { createApiToken, deleteApiToken, listApiTokens } from '@/stores/apiToken'
   import type { APITokenWithSecret } from '@/types/apiToken'
 
   import Input from '@/components/ui/Input.vue'
@@ -61,14 +61,14 @@
 
   const { isLoading, data } = useQuery({
     queryKey,
-    queryFn: () => listUserApiTokens(props.userID),
+    queryFn: () => listApiTokens(props.userID),
   })
 
   const tokens = computed(() => data.value ?? [])
 
   const { isPending: isCreating, mutate: createToken } = useMutation({
     mutationKey: [...queryKey, 'create'],
-    mutationFn: (n: string) => createUserApiToken(props.userID, { name: n }),
+    mutationFn: (n: string) => createApiToken(props.userID, { name: n }),
     onSuccess: (d: APITokenWithSecret) => {
       name.value = ''
       newToken.value = d.token
@@ -78,7 +78,7 @@
 
   const { mutate: removeToken } = useMutation({
     mutationKey: [...queryKey, 'delete'],
-    mutationFn: (tokenId: number) => deleteUserApiToken(props.userID, tokenId),
+    mutationFn: (tokenId: number) => deleteApiToken(props.userID, tokenId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   })
 

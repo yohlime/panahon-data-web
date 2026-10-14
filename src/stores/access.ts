@@ -9,24 +9,30 @@ import {
 } from '@/schemas/access'
 import type { AccessRequestStatus, CreateAccessRequestReq, UpdateUserAccessReq } from '@/types/access'
 
-export const getMyAccess = async () => {
-  const { data } = await axios.get('/users/me/access')
+export const getUserAccess = async (userID: number) => {
+  const { data } = await axios.get(`/users/${userID}/access`)
   return userAccessSchema.parse(data)
 }
 
-export const createAccessRequest = async (args: CreateAccessRequestReq) => {
+export const updateUserAccess = async (userID: number, args: UpdateUserAccessReq) => {
+  const parsed = updateUserAccessArgsSchema.parse(args)
+  const { data } = await axios.put(`/users/${userID}/access`, parsed)
+  return userAccessSchema.parse(data)
+}
+
+export const createUserAccessRequest = async (userID: number, args: CreateAccessRequestReq) => {
   const parsed = createAccessRequestArgsSchema.parse(args)
-  const { data } = await axios.post('/users/me/access-requests', parsed)
+  const { data } = await axios.post(`/users/${userID}/access-requests`, parsed)
   return accessRequestSchema.parse(data)
 }
 
-export const listMyAccessRequests = async () => {
-  const { data } = await axios.get('/users/me/access-requests')
+export const listUserAccessRequests = async (userID: number) => {
+  const { data } = await axios.get(`/users/${userID}/access-requests`)
   return accessRequestSchema.array().parse(data)
 }
 
-export const cancelAccessRequest = async (id: number) => {
-  await axios.delete(`/users/me/access-requests/${id}`)
+export const cancelUserAccessRequest = async (userID: number, requestID: number) => {
+  await axios.delete(`/users/${userID}/access-requests/${requestID}`)
 }
 
 export const listAccessRequests = async (status?: AccessRequestStatus) => {
@@ -43,15 +49,4 @@ export const approveAccessRequest = async (id: number, note?: string) => {
 export const denyAccessRequest = async (id: number, note: string) => {
   const { data } = await axios.post(`/access-requests/${id}/deny`, { note })
   return accessRequestSchema.parse(data)
-}
-
-export const getUserAccess = async (userID: number) => {
-  const { data } = await axios.get(`/users/${userID}/access`)
-  return userAccessSchema.parse(data)
-}
-
-export const updateUserAccess = async (userID: number, args: UpdateUserAccessReq) => {
-  const parsed = updateUserAccessArgsSchema.parse(args)
-  const { data } = await axios.put(`/users/${userID}/access`, parsed)
-  return userAccessSchema.parse(data)
 }

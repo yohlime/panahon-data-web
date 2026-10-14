@@ -27,10 +27,12 @@
 
 <script setup lang="ts">
   import { computed, ref } from 'vue'
+  import { useStore } from '@nanostores/vue'
   import { useQuery } from '@tanstack/vue-query'
 
   import { listStationObservations } from '@/stores/observation'
-  import { getMyAccess } from '@/stores/access'
+  import { getUserAccess } from '@/stores/access'
+  import { $authUserID } from '@/stores/user'
   import type { StationObservation } from '@/types/observation'
 
   import Table from '@/components/ui/Table.vue'
@@ -50,7 +52,12 @@
     queryFn: () => listStationObservations(stationID, page.value, perPage.value),
   })
 
-  const { data: access } = useQuery({ queryKey: ['access', 'me'], queryFn: getMyAccess })
+  const userID = useStore($authUserID)
+  const { data: access } = useQuery({
+    queryKey: ['users', userID, 'access'],
+    queryFn: () => getUserAccess(userID.value!),
+    enabled: () => !!userID.value,
+  })
 
   const items = computed(() => data.value?.items ?? [])
 
