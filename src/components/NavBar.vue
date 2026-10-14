@@ -120,10 +120,13 @@
   const { mutate: handleLogout } = useMutation({
     mutationKey: ['auth', 'logout'],
     mutationFn: logout,
-    onSuccess: async () => {
-      await invalidateQueries()
+    onSettled: () => {
       loginDialog.value = false
       showDialog.value = false
+      showSettings.value = false
+      // Full reload: the guard reads the auth query on load, so a client-side
+      // state change alone would leave us stranded on a protected page.
+      window.location.replace(route())
     },
   })
 
@@ -154,6 +157,7 @@
   }
 
   const invalidateQueries = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['auth', 'user'] })
     if (activeRoute.value?.name === 'stations') {
       await queryClient.invalidateQueries({ queryKey: ['station', stnPage, stnPerPage] })
     }

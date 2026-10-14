@@ -15,14 +15,18 @@
     staleTime: 5 * 60 * 1000,
   })
 
-  watch([isFetched, data], () => {
-    if (!isFetched.value || typeof window === 'undefined') return
+  watch(
+    [isFetched, data],
+    () => {
+      if (!isFetched.value || typeof window === 'undefined') return
 
-    const user = data.value
-    const allowed = !!user && (props.roles.length === 0 || props.roles.some((role) => user.roles?.includes(role)))
+      const user = data.value
+      const allowed = !!user && (props.roles.length === 0 || props.roles.some((role) => user.roles?.includes(role)))
 
-    if (!allowed) {
-      window.location.replace(route())
-    }
-  })
+      if (!allowed) {
+        window.location.replace(route())
+      }
+    },
+    { immediate: true },
+  )
 </script>
