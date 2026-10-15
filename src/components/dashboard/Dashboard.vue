@@ -10,7 +10,7 @@
         <StatCard label="My Stations" :value="myStationCount" icon="mdi-weather-pouring" />
         <StatCard label="My Stations Reporting" :value="myReportingCount" icon="mdi-access-point-check" />
         <StatCard label="Online / Offline" :value="`${onlineCount} / ${offlineCount}`" icon="mdi-lan-connect" />
-        <StatCard label="My API Keys" :value="apiKeyCount" icon="mdi-key-chain" />
+        <StatCard label="My API Keys" :value="apiKeyCount" icon="mdi-key-chain" :to="route('settings')" />
         <StatCard label="History Access" :value="historyLabel" :hint="variablesLabel" icon="mdi-calendar-range" />
       </template>
 
@@ -36,6 +36,7 @@
   import { listApiTokens } from '@/stores/apiToken'
   import { getUserAccess, listAccessRequests } from '@/stores/access'
   import { $authUserID, $isLoggedIn, $isAdmin, $isSuperAdmin, listUsers } from '@/stores/user'
+  import { route } from '@/stores/routes'
 
   import StatCard from '@/components/dashboard/StatCard.vue'
   import LatestTable from '@/components/observations/LatestTable.vue'
