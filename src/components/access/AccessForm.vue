@@ -16,8 +16,9 @@
   import { z } from 'zod'
 
   import Input from '@/components/ui/Input.vue'
-  import Select, { MULTISELECT_ALL, type SelectOption } from '@/components/ui/Select.vue'
+  import { MULTISELECT_ALL, type SelectOption } from '@/components/ui/Select.vue'
   import Button from '@/components/ui/Button.vue'
+  import ScopeSelects, { normalizeMaxDays } from '@/components/access/ScopeSelects.vue'
 
   const props = withDefaults(
     defineProps<{
@@ -47,17 +48,6 @@
   )
 
   const emit = defineEmits<{ submit: [values: AccessFormValues]; cancel: [] }>()
-
-  const maxDaysOptions = [
-    { value: 365, text: '1 year' },
-    { value: 730, text: '2 years' },
-    { value: 1095, text: '3 years' },
-    { value: 1825, text: '5 years' },
-    { value: 3650, text: '10 years' },
-    { value: -1, text: 'Unlimited' },
-  ]
-  const allowedMaxDays = maxDaysOptions.map((o) => o.value)
-  const normalizeMaxDays = (m?: number) => (m !== undefined && allowedMaxDays.includes(m) ? m : 365)
 
   const value = z.union([z.string(), z.number()])
   const { defineField, meta, values, resetForm } = useForm({
@@ -115,29 +105,13 @@
 
 <template>
   <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
-    <Select
-      v-model="stationSelection"
-      :options="stationOptions"
-      multiple
-      all-label="All stations"
-      placeholder="Select stations…"
-      >Stations</Select
-    >
-    <div class="flex items-end gap-3">
-      <div class="w-1/3">
-        <Select name="max-days" v-model="maxDays" :options="maxDaysOptions">Max days of history</Select>
-      </div>
-      <div class="flex-1">
-        <Select
-          v-model="variableSelection"
-          :options="variableOptions"
-          multiple
-          all-label="All variables"
-          placeholder="Select variables…"
-          >Variables</Select
-        >
-      </div>
-    </div>
+    <ScopeSelects
+      v-model:stations="stationSelection"
+      v-model:variables="variableSelection"
+      v-model:maxDays="maxDays"
+      :station-options="stationOptions"
+      :variable-options="variableOptions"
+    />
     <Input v-if="showReason" name="reason" v-model="reason">Reason</Input>
 
     <div class="flex justify-end gap-2">
