@@ -1,4 +1,4 @@
-# Panahon Data Admin
+# Panahon Data Web
 
 Admin frontend for the Panahon Observatory weather-data API. Astro (SSR via
 `@astrojs/node`, `output: 'server'`) with Vue 3 islands, UnoCSS, reka-ui,
