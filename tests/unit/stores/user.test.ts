@@ -76,9 +76,8 @@ describe('$authUser', () => {
 
     test('api server error', async ({ expect }) => {
       vi.mocked(axios.post).mockRejectedValueOnce({ response: { status: 404 } })
-      vi.mocked(axios.get).mockRejectedValue({ response: { status: 404 } })
-      await expect(login(loginArgs)).resolves.toBeUndefined()
-      expect($authUser.get()).toBeUndefined()
+      // login no longer swallows the error, so the form can show the reason
+      await expect(login(loginArgs)).rejects.toBeDefined()
     })
 
     test('parse error', async ({ expect }) => {

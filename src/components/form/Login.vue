@@ -61,8 +61,10 @@
     onSuccess: () => {
       emit('success')
     },
-    onError: () => {
-      setFieldError('username', 'Invalid username or password')
+    onError: (err: unknown) => {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Invalid username or password'
+      setFieldError('username', message)
     },
   })
 

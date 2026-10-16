@@ -1,7 +1,18 @@
 <template>
   <div class="w-full flex flex-col space-y-4 md:space-y-6">
     <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">Sign Up</h1>
-    <form class="space-y-4 md:space-y-6" @submit.prevent="handleSubmit">
+
+    <div
+      v-if="submitted"
+      class="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"
+    >
+      <p class="font-medium">Your account is awaiting approval.</p>
+      <p class="mt-1">
+        An administrator will review your registration. You'll be able to log in once it's approved.
+      </p>
+    </div>
+
+    <form v-else class="space-y-4 md:space-y-6" @submit.prevent="handleSubmit">
       <Input name="full_name" placeholder="Full Name" v-model="fullName" v-bind="fullNameProps">Name</Input>
       <Input name="username" placeholder="username" v-model="username" v-bind="usernameProps">Username</Input>
       <Input type="email" name="email" placeholder="Enter email here" v-model="email" v-bind="emailProps">Email</Input>
@@ -32,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+  import { ref } from 'vue'
   import { useMutation } from '@tanstack/vue-query'
   import { useForm } from 'vee-validate'
   import { toTypedSchema } from '@vee-validate/zod'
@@ -43,18 +55,23 @@
   import Input from '@/components/ui/Input.vue'
   import Button from '@/components/ui/Button.vue'
 
-  const emit = defineEmits<{
-    (event: 'success'): void
+  // Declared (not emitted): registration no longer opens a session, so we keep
+  // the dialog open and show the pending state instead.
+  defineEmits<{
+    success: []
   }>()
+
+  const submitted = ref(false)
 
   const { isPending, mutate } = useMutation({
     mutationKey: ['user', 'register'],
     mutationFn: register,
-    onError: () => {
-      setFieldError('full_name', 'Registration error')
-    },
-    onSuccess: () => {
-      emit('success')
+    onSuccess: (ok) => {
+      if (ok) {
+        submitted.value = true
+      } else {
+        setFieldError('full_name', 'Registration failed (username or email may already be taken)')
+      }
     },
   })
 

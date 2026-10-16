@@ -3,12 +3,21 @@ import DefaultLayout from '@/layouts/Default.astro'
 
 import Guard from '@/components/auth/Guard.vue'
 import Table from '@/components/users/Table.vue'
+import RegistrationsTable from '@/components/users/RegistrationsTable.vue'
 ---
 
 <DefaultLayout>
-  <div class="p-4">
+  <div class="p-4 flex flex-col gap-8">
     <Guard client:load :roles="['SUPERADMIN', 'ADMIN']" />
-    <h1 class="text-2xl font-bold mb-4">Users</h1>
-    <Table client:load />
+
+    <section>
+      <h1 class="text-2xl font-bold mb-4">Users</h1>
+      <Table client:load />
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-bold mb-4">Registrations</h2>
+      <RegistrationsTable client:load />
+    </section>
   </div>
 </DefaultLayout>

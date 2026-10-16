@@ -25,9 +25,13 @@ export const userSchema = z.object({
   username: z.string(),
   full_name: z.string(),
   email: z.email(),
+  status: z.string(),
   roles: z.string().array().nullish(),
   password_changed_at: z.coerce.date(),
   created_at: z.coerce.date(),
+  reviewed_by: z.number().nullish(),
+  reviewed_at: z.coerce.date().nullish(),
+  review_note: z.string().nullish(),
 })
 
 export const paginatedUserSchema = makePaginatedSchema(userSchema)

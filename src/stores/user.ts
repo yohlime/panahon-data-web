@@ -32,13 +32,8 @@ export const getUser = async () => {
 export const fetchAuthUser = async () => (await getUser()) ?? null
 
 export const login = async (loginArgs: UserLoginArgs) => {
-  try {
-    await axios.post(`${baseUrl}/login`, loginArgs)
-    return await getUser()
-  } catch {
-    $authUser.set(undefined)
-    return undefined
-  }
+  await axios.post(`${baseUrl}/login`, loginArgs)
+  return await getUser()
 }
 
 export const logout = async () => {
@@ -53,11 +48,9 @@ export const logout = async () => {
 export const register = async (registerArgs: UserRegisterArgs) => {
   try {
     const { status } = await axios.post(`${baseUrl}/register`, registerArgs)
-    if (status < 200 || status >= 300) return false
-    // Registration does not open a session, so log in to gain authentication.
-    await login({ username: registerArgs.username, password: registerArgs.password })
-    return true
-  } catch (err) {
+    // Registration is pending admin approval; no session is opened here.
+    return status >= 200 && status < 300
+  } catch {
     return false
   }
 }
@@ -78,9 +71,22 @@ export const $isSuperAdmin = computed(
 export const $page = atom(1)
 export const $perPage = atom(10)
 
-export const listUsers = async () => {
-  const { data } = await axios.get(`${baseUrl}?page=${$page.get()}&per_page=${$perPage.get()}`)
+export const listUsers = async (params?: { status?: string; page?: number; perPage?: number }) => {
+  const page = params?.page ?? $page.get()
+  const perPage = params?.perPage ?? $perPage.get()
+  const status = params?.status ? `&status=${params.status}` : ''
+  const { data } = await axios.get(`${baseUrl}?page=${page}&per_page=${perPage}${status}`)
   return paginatedUserSchema.parse(data)
+}
+
+export const approveUser = async (userID: number, note?: string) => {
+  const { data } = await axios.post(`${baseUrl}/${userID}/approve`, { note })
+  return userSchema.parse(data)
+}
+
+export const rejectUser = async (userID: number, note: string) => {
+  const { data } = await axios.post(`${baseUrl}/${userID}/reject`, { note })
+  return userSchema.parse(data)
 }
 
 export const getUserByID = async (userID?: number) => {
