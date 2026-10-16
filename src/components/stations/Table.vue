@@ -107,7 +107,7 @@
       queryClient.invalidateQueries({ queryKey: ['stations', 'list', { page, perPage }] })
     },
     onError: (err) => {
-      console.log(err)
+      console.error(err)
     },
   })
 </script>
