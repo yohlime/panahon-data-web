@@ -7,43 +7,46 @@
         </button>
         <a :href="route()" class="font-trajan text-xl md:text-2xl tracking-3px">Panahon</a>
       </div>
-      <div class="flex flex-col items-center">
-        <ul>
-          <li v-if="!isLoggedIn">
-            <a
-              class="py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              @click.prevent="showLogin"
-            >
-              Login
-            </a>
-          </li>
-          <li v-else class="relative">
-            <a
-              class="py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent cursor-pointer"
-              @click.prevent="showSettings = !showSettings"
-            >
-              <div class="i-mdi:cog text-xl"></div>
-            </a>
-            <div
-              v-show="showSettings"
-              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
-            >
-              <a
-                :href="route('settings')"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                @click="showSettings = false"
-              >
-                Settings
-              </a>
-              <a
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                @click.prevent="handleLogout"
-              >
-                Logout
-              </a>
-            </div>
-          </li>
-        </ul>
+      <div class="flex items-center gap-1">
+        <template v-if="!isLoggedIn">
+          <button
+            type="button"
+            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            aria-label="Log in"
+            title="Log in"
+            @click="showLogin"
+          >
+            <div class="i-mdi:login text-xl"></div>
+          </button>
+          <button
+            type="button"
+            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            aria-label="Register"
+            title="Register"
+            @click="showSignUp"
+          >
+            <div class="i-mdi:account-plus text-xl"></div>
+          </button>
+        </template>
+        <template v-else>
+          <a
+            :href="route('settings')"
+            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            aria-label="Settings"
+            title="Settings"
+          >
+            <div class="i-mdi:cog text-xl"></div>
+          </a>
+          <button
+            type="button"
+            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            aria-label="Log out"
+            title="Log out"
+            @click="handleLogout"
+          >
+            <div class="i-mdi:logout text-xl"></div>
+          </button>
+        </template>
       </div>
     </nav>
     <DialogRoot v-model:open="showDialog">
@@ -105,7 +108,6 @@
   const stnPerPage = useStore($stnPerPage)
 
   const showDialog = ref(false)
-  const showSettings = ref(false)
   const loginDialog = ref(false)
   const signupDialog = ref(false)
 
@@ -123,7 +125,6 @@
     onSettled: () => {
       loginDialog.value = false
       showDialog.value = false
-      showSettings.value = false
       // Full reload: the guard reads the auth query on load, so a client-side
       // state change alone would leave us stranded on a protected page.
       window.location.replace(route())
