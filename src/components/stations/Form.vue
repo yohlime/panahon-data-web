@@ -44,8 +44,8 @@
           :class="[
             'w-1/3 text-gray-200',
             meta.valid
-              ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-              : 'bg-blue-400 dark:bg-blue-500',
+              ? 'bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30 dark:bg-mo-Blue dark:hover:bg-mo-Blue/90 dark:focus:ring-mo-Blue/40'
+              : 'bg-mo-Blue/60 dark:bg-mo-Blue',
           ]"
           @click.prevent="handleSubmit"
           >{{ isNew ? 'Add' : 'Save' }}</Button

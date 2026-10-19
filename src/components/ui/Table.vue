@@ -132,7 +132,7 @@
             h('div', { class: 'flex text-xl gap-1' }, [
               showActionsObj.value.edit &&
                 h('div', {
-                  class: 'i-mdi:pencil hover:text-blue-400 cursor-pointer',
+                  class: 'i-mdi:pencil hover:text-mo-Blue cursor-pointer',
                   onClick: () => {
                     itemID.value = row.original.id
                     editFormDialog.value = true

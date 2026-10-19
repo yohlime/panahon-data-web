@@ -1,11 +1,11 @@
 <template>
   <header>
-    <nav class="flex justify-between items-center bg-white md:new-navbar p-4">
+    <nav class="flex justify-between items-center bg-white p-3 md:new-navbar">
       <div class="flex items-center gap-2">
         <button class="p-2 text-gray-700 md:hidden" aria-label="Open menu" @click="openMobileNav">
           <div class="i-mdi:menu text-2xl"></div>
         </button>
-        <a :href="route()" class="font-trajan text-xl md:text-2xl tracking-3px">Panahon</a>
+        <a :href="route()" class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue md:text-white">Panahon</a>
       </div>
       <div class="flex items-center gap-1">
         <template v-if="!isLoggedIn">
@@ -63,7 +63,7 @@
               Don’t have an account yet?
               <a
                 href="#"
-                class="font-medium text-blue-600 hover:underline dark:text-blue-500"
+                class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue"
                 @click.prevent="showSignUp"
                 >Sign up</a
               >
@@ -75,7 +75,7 @@
               Already have an account?
               <a
                 href="#"
-                class="font-medium text-blue-600 hover:underline dark:text-blue-500"
+                class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue"
                 @click.prevent="showLogin"
                 >Login</a
               >

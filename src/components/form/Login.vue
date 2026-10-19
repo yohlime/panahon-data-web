@@ -15,14 +15,14 @@
       <!--         type="checkbox" -->
       <!--         v-model="remember" -->
       <!--         v-bind="rememberProps" -->
-      <!--         class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" -->
+      <!--         class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-mo-Blue/30 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-mo-Blue/50 dark:ring-offset-gray-800" -->
       <!--       /> -->
       <!--     </div> -->
       <!--     <div class="ml-3 text-sm"> -->
       <!--       <label for="remember" class="text-gray-500 dark:text-gray-300">Remember me</label> -->
       <!--     </div> -->
       <!--   </div> -->
-      <!--   <a href="#" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">Forgot password?</a> -->
+      <!--   <a href="#" class="text-sm font-medium text-mo-Blue hover:underline dark:text-mo-Blue">Forgot password?</a> -->
       <!-- </div> -->
       <Button
         :disabled="!meta.valid"
@@ -30,8 +30,8 @@
         :class="[
           'w-full text-gray-200',
           meta.valid
-            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-            : 'bg-blue-400 dark:bg-blue-500',
+            ? 'bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30 dark:bg-mo-Blue dark:hover:bg-mo-Blue/90 dark:focus:ring-mo-Blue/40'
+            : 'bg-mo-Blue/60 dark:bg-mo-Blue',
         ]"
         >Login</Button
       >

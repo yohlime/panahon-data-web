@@ -6,7 +6,7 @@
         :key="s.value"
         :class="[
           'px-3 py-1.5 rounded-lg text-sm font-medium',
-          status === s.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
+          status === s.value ? 'bg-mo-Blue text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
         ]"
         @click="setStatus(s.value)"
       >

@@ -5,7 +5,7 @@
     class="bg-white rounded-lg p-4 shadow-sm border border-gray-100 flex items-start gap-3"
     :class="to ? 'hover:bg-gray-50 transition-colors' : ''"
   >
-    <div v-if="icon" :class="iconClass" class="text-2xl text-blue-600 shrink-0"></div>
+    <div v-if="icon" :class="iconClass" class="text-2xl text-mo-Blue shrink-0"></div>
     <div class="min-w-0">
       <div class="text-xs uppercase tracking-wide text-gray-400">{{ label }}</div>
       <div class="text-2xl font-semibold text-gray-800 truncate">{{ value }}</div>

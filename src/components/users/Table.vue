@@ -7,7 +7,7 @@
           :key="s.label"
           :class="[
             'px-3 py-1.5 rounded-lg text-sm font-medium',
-            status === s.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
+            status === s.value ? 'bg-mo-Blue text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
           ]"
           @click="setStatus(s.value)"
         >
@@ -97,7 +97,7 @@
               <Button
                 :disabled="!rejectNote"
                 :is-pending="isRejecting"
-                class="text-gray-200 bg-blue-600 hover:bg-blue-700 focus:ring-blue-300"
+                class="text-gray-200 bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30"
                 @click="confirmReject"
                 >Reject</Button
               >

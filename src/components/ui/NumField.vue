@@ -12,7 +12,7 @@
     >
       <label :for="name" class="block mb-1 text-sm font-medium text-gray-900 dark:text-white"><slot /></label>
       <div
-        class="flex items-center bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus-border-blue-600 w-full py-1 px-0.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        class="flex items-center bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-mo-Blue/50 focus-border-mo-Blue w-full py-1 px-0.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-mo-Blue/40 dark:focus:border-mo-Blue"
       >
         <NumberFieldDecrement class="px-1 py-2 disabled:opacity-20">
           <div class="i-mdi:minus text-xs" />

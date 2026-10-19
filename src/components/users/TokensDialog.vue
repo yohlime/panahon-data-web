@@ -9,7 +9,7 @@
       <Button
         :disabled="!name"
         :is-pending="isCreating"
-        class="text-gray-200 bg-blue-600 hover:bg-blue-700 focus:ring-blue-300"
+        class="text-gray-200 bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30"
         @click.prevent="handleCreate"
         >Add</Button
       >

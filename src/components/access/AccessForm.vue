@@ -128,8 +128,8 @@
         :class="[
           'text-gray-200',
           meta.valid && (!requireDirty || meta.dirty)
-            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300'
-            : 'bg-blue-400 dark:bg-blue-500',
+            ? 'bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30'
+            : 'bg-mo-Blue/60 dark:bg-mo-Blue',
         ]"
         @click.prevent="onSubmit"
         >{{ submitLabel }}</Button

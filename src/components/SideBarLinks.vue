@@ -52,7 +52,7 @@
   const linkClass = (r: Route) => [
     'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium',
     !props.expanded && 'justify-center px-0',
-    props.activeName === r.name ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100',
+    props.activeName === r.name ? 'bg-mo-Blue text-white' : 'text-gray-700 hover:bg-gray-100',
   ]
 
   const go = (r: Route) => {

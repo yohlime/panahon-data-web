@@ -92,13 +92,13 @@
         <button
           type="button"
           :id="name"
-          class="flex min-h-[42px] w-full flex-wrap items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-left focus:ring-2 focus:ring-blue-500"
+          class="flex min-h-[42px] w-full flex-wrap items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-left focus:ring-2 focus:ring-mo-Blue/40"
         >
           <template v-if="multiple">
             <span
               v-for="val in selectedArray"
               :key="val"
-              class="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800"
+              class="inline-flex items-center gap-1 rounded bg-mo-Blue/10 px-2 py-0.5 text-xs text-mo-Blue"
             >
               {{ labelFor(val) }}
               <span role="button" aria-label="Remove" @click.stop="remove(val)">

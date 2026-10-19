@@ -8,7 +8,7 @@
         :id="name"
         v-model="model"
         :class="[
-          'bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
+          'bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-mo-Blue/50 focus:border-mo-Blue block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-mo-Blue/40 dark:focus:border-mo-Blue',
           { 'pe-10': withIconEnd },
         ]"
         :placeholder="placeholder"
