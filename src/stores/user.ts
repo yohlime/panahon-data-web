@@ -5,10 +5,18 @@ import axios from '@/utils/axios'
 import {
   createUserArgsSchema,
   paginatedUserSchema,
+  updateProfileArgsSchema,
   updateUserArgsSchema,
   userSchema,
 } from '@/schemas/user'
-import type { CreateUserReq, UpdateUserReq, User, UserLoginArgs, UserRegisterArgs } from '@/types/user'
+import type {
+  CreateUserReq,
+  UpdateProfileReq,
+  UpdateUserReq,
+  User,
+  UserLoginArgs,
+  UserRegisterArgs,
+} from '@/types/user'
 
 const baseUrl = '/users'
 
@@ -104,6 +112,12 @@ export const createUser = async (args: CreateUserReq) => {
 export const updateUser = async (args: UpdateUserReq) => {
   const parsed = updateUserArgsSchema.parse(args)
   const { data } = await axios.put(`${baseUrl}/${parsed.id}`, parsed)
+  return userSchema.parse(data)
+}
+
+export const updateProfile = async (userID: number, args: UpdateProfileReq) => {
+  const parsed = updateProfileArgsSchema.parse(args)
+  const { data } = await axios.put(`${baseUrl}/${userID}/profile`, parsed)
   return userSchema.parse(data)
 }
 

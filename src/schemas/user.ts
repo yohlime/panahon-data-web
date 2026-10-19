@@ -52,6 +52,15 @@ export const updateUserArgsSchema = z.object({
   roles: z.string().array().optional(),
 })
 
+export const updateProfileArgsSchema = z.object({
+  current_password: z.string().min(6, { error: 'Enter your current password' }),
+  username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
+  email: z.email(),
+  password: z
+    .union([z.string().min(6, { error: 'Must contain at least 6 characters' }), z.literal('')])
+    .optional(),
+})
+
 export const accessTokenSchema = z.object({
   access_token: z.string(),
   access_token_expires_at: z.coerce.date(),
