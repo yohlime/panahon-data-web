@@ -12,7 +12,7 @@
       </p>
     </div>
 
-    <form v-else class="space-y-4 md:space-y-6" @submit.prevent="handleSubmit">
+    <form v-else class="space-y-4 md:space-y-6" @submit.prevent="onSubmit">
       <Input name="full_name" placeholder="Full Name" v-model="fullName" v-bind="fullNameProps">Name</Input>
       <Input name="username" placeholder="username" v-model="username" v-bind="usernameProps">Username</Input>
       <Input type="email" name="email" placeholder="Enter email here" v-model="email" v-bind="emailProps">Email</Input>
@@ -75,7 +75,7 @@
     },
   })
 
-  const { defineField, meta, setFieldError, values } = useForm({
+  const { defineField, meta, setFieldError, handleSubmit } = useForm({
     validationSchema: toTypedSchema(userRegisterArgsSchema),
   })
 
@@ -93,7 +93,8 @@
   })
   const [confirmPassword, confirmPasswordProps] = defineField('confirm_password')
 
-  const handleSubmit = () => {
-    mutate(values as UserRegisterArgs)
-  }
+  // vee-validate validates before calling the mutation.
+  const onSubmit = handleSubmit((formValues) => {
+    mutate(formValues as UserRegisterArgs)
+  })
 </script>

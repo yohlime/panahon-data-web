@@ -14,6 +14,8 @@
         :placeholder="placeholder"
         :required="required"
         :disabled="disabled"
+        @blur="emit('blur', $event)"
+        @change="emit('change', $event)"
       />
       <div v-if="withIconEnd" :class="['absolute inset-y-0 end-0 top-0 flex items-center', { 'pe-3.5': withIconEnd }]">
         <div v-if="!reveal" class="i-mdi:eye text-xl" @click="reveal = true"></div>
@@ -48,6 +50,10 @@
   )
 
   const model = defineModel()
+
+  // Forward the native events vee-validate uses, so field listeners bound on
+  // <Input> fire even though the actual <input> is nested.
+  const emit = defineEmits<{ blur: [FocusEvent]; change: [Event] }>()
 
   const reveal = ref(false)
 

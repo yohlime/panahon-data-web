@@ -1,7 +1,7 @@
 <template>
   <div class="w-full flex flex-col space-y-4 md:space-y-6">
     <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">Login</h1>
-    <form class="space-y-4 md:space-y-6" @submit.prevent="handleSubmit">
+    <form class="space-y-4 md:space-y-6" @submit.prevent="onSubmit">
       <Input name="username" placeholder="username" v-model="username" v-bind="usernameProps">Username</Input>
       <Input type="password" name="password" placeholder="••••••••" v-model="password" v-bind="passwordProps"
         >Password</Input
@@ -68,7 +68,7 @@
     },
   })
 
-  const { defineField, meta, setFieldError, values } = useForm({
+  const { defineField, meta, setFieldError, handleSubmit } = useForm({
     validationSchema: toTypedSchema(userLoginArgsSchema),
   })
 
@@ -80,7 +80,8 @@
   })
   // const [remember, rememberProps] = defineField('rememberPassword')
 
-  const handleSubmit = () => {
-    mutate(values as UserLoginArgs)
-  }
+  // vee-validate validates before calling the mutation.
+  const onSubmit = handleSubmit((formValues) => {
+    mutate(formValues as UserLoginArgs)
+  })
 </script>

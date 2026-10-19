@@ -9,7 +9,7 @@ export const userLoginArgsSchema = z.object({
 
 export const userRegisterArgsSchema = z
   .object({
-    full_name: z.string(),
+    full_name: z.string().min(1, { error: 'Required' }),
     email: z.email(),
     username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
     password: z.string().min(6, { error: 'Must contain at least 6 characters' }),

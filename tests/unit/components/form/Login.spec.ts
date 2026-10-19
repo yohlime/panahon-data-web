@@ -55,8 +55,6 @@ describe('Login', () => {
 
     await Promise.all(inputs.map((input) => input.setValue(loginArgs[input.element.name])))
     await wrapper.find('form').trigger('submit')
-
-    expect(wrapper.emitted()).toHaveProperty('submit')
-    expect(mockMutateFn).toHaveBeenCalledWith(loginArgs)
+    await vi.waitFor(() => expect(mockMutateFn).toHaveBeenCalledWith(loginArgs))
   })
 })
