@@ -1,13 +1,33 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-end">
-      <Button @click="showCreateDialog = true">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex gap-2">
+        <button
+          v-for="s in statuses"
+          :key="s.label"
+          :class="[
+            'px-3 py-1.5 rounded-lg text-sm font-medium',
+            status === s.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100',
+          ]"
+          @click="setStatus(s.value)"
+        >
+          {{ s.label }}
+        </button>
+      </div>
+
+      <Button v-if="status !== 'pending'" @click="showCreateDialog = true">
         <div class="i-mdi:plus"></div>
         Create User
       </Button>
     </div>
 
-    <Table v-if="!isLoading && data" :data="items" :columns="columns" :show-actions="{ edit: true, delete: true }" @delete-item="handleDelete">
+    <Table
+      v-if="!isLoading && data"
+      :data="items"
+      :columns="columns"
+      :show-actions="showActions"
+      @delete-item="handleDelete"
+    >
       <template #edit-form="{ itemID, close }"><Form :itemID="itemID" @close="close" @success="handleSuccess" /></template>
     </Table>
 
@@ -59,41 +79,86 @@
         </DialogContent>
       </DialogPortal>
     </DialogRoot>
+
+    <DialogRoot v-model:open="showRejectDialog" v-slot="{ close }">
+      <DialogPortal>
+        <DialogOverlay class="bg-gray-900/40 data-[state=open]:animate-overlayShow fixed inset-0 z-30" />
+        <DialogContent
+          class="data-[state=open]:animate-contentShow fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%] rounded-[6px] bg-white p-[25px] shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] focus:outline-none z-[100]"
+          :aria-describedby="undefined"
+        >
+          <div class="flex w-full flex-col gap-4">
+            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+              Reject Registration
+            </h1>
+            <Input name="note" v-model="rejectNote">Reason</Input>
+            <div class="flex justify-end gap-2">
+              <Button class="bg-gray-200 border border-gray-400 hover:bg-gray-300" @click="close">Cancel</Button>
+              <Button
+                :disabled="!rejectNote"
+                :is-pending="isRejecting"
+                class="text-gray-200 bg-blue-600 hover:bg-blue-700 focus:ring-blue-300"
+                @click="confirmReject"
+                >Reject</Button
+              >
+            </div>
+          </div>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed, h, ref, watchEffect } from 'vue'
+  import { computed, h, ref } from 'vue'
   import { useVModel } from '@nanostores/vue'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
+  import type { ColumnDef } from '@tanstack/vue-table'
 
-  import { $page, $perPage, deleteUser, listUsers } from '@/stores/user'
+  import { $page, $perPage, approveUser, deleteUser, listUsers, rejectUser } from '@/stores/user'
   import type { User } from '@/types/user'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
   import Table from '@/components/ui/Table.vue'
   import Pagination from '@/components/ui/Pagination.vue'
   import Button from '@/components/ui/Button.vue'
+  import Input from '@/components/ui/Input.vue'
   import Form from '@/components/users/Form.vue'
   import TokensDialog from '@/components/users/TokensDialog.vue'
   import UserAccessDialog from '@/components/access/UserAccessDialog.vue'
+
+  // `undefined` = the "All" tab (no status filter). Active is first and default.
+  const statuses: { label: string; value: string | undefined }[] = [
+    { label: 'Active', value: 'active' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Rejected', value: 'rejected' },
+    { label: 'All', value: undefined },
+  ]
 
   const page = useVModel($page)
   const perPage = useVModel($perPage)
   const queryClient = useQueryClient()
 
+  const status = ref<string | undefined>('active')
+  const isPending = computed(() => status.value === 'pending')
+  const isAll = computed(() => status.value === undefined)
+
   const { isLoading, data } = useQuery({
-    queryKey: ['users', 'list', { page, perPage }],
-    queryFn: listUsers,
+    queryKey: ['users', 'list', { status, page, perPage }],
+    queryFn: () => listUsers({ status: status.value, page: page.value, perPage: perPage.value }),
   })
 
   const items = computed(() => data.value?.items ?? [])
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
 
   const showCreateDialog = ref(false)
   const showTokensDialog = ref(false)
   const showAccessDialog = ref(false)
+  const showRejectDialog = ref(false)
   const selectedUserID = ref(0)
   const selectedAccessUserID = ref(0)
+  const rejectID = ref(0)
+  const rejectNote = ref('')
 
   const openTokens = (userID: number) => {
     selectedUserID.value = userID
@@ -105,44 +170,106 @@
     showAccessDialog.value = true
   }
 
-  const columns = [
-    { accessorKey: 'username', header: 'Username' },
-    { accessorKey: 'full_name', header: 'Full Name' },
-    { accessorKey: 'email', header: 'Email' },
-    {
-      id: 'roles',
-      header: 'Roles',
-      cell: ({ row }: { row: { original: User } }) => (row.original.roles ?? []).join(', '),
+  const { mutate: approve } = useMutation({
+    mutationKey: ['users', 'approve'],
+    mutationFn: (userID: number) => approveUser(userID),
+    onSuccess: invalidate,
+    onError: (err) => console.error(err),
+  })
+
+  const startReject = (userID: number) => {
+    rejectID.value = userID
+    rejectNote.value = ''
+    showRejectDialog.value = true
+  }
+
+  const { mutate: reject, isPending: isRejecting } = useMutation({
+    mutationKey: ['users', 'reject'],
+    mutationFn: ({ id, note }: { id: number; note: string }) => rejectUser(id, note),
+    onSuccess: () => {
+      showRejectDialog.value = false
+      rejectNote.value = ''
+      invalidate()
     },
-    {
-      id: 'tokens',
-      header: 'API Keys',
-      cell: ({ row }: { row: { original: User } }) =>
-        h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys'),
-    },
-    {
-      id: 'access',
-      header: 'Access',
-      cell: ({ row }: { row: { original: User } }) =>
-        h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access'),
-    },
-  ]
+    onError: (err) => console.error(err),
+  })
+
+  const confirmReject = () => {
+    if (rejectNote.value) reject({ id: rejectID.value, note: rejectNote.value })
+  }
+
+  const statusClass = (s: string) =>
+    ({ pending: 'text-yellow-600', active: 'text-green-600', rejected: 'text-red-600' })[s] ?? 'text-gray-500'
+
+  const columns = computed<ColumnDef<User>[]>(() => {
+    const cols: ColumnDef<User>[] = [
+      { accessorKey: 'username', header: 'Username' },
+      { accessorKey: 'full_name', header: 'Full Name' },
+      { accessorKey: 'email', header: 'Email' },
+      { id: 'roles', header: 'Roles', cell: ({ row }) => (row.original.roles ?? []).join(', ') },
+    ]
+
+    // Status is only meaningful when mixing statuses ("All").
+    if (isAll.value) {
+      cols.push({
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) => h('span', { class: statusClass(row.original.status) }, row.original.status),
+      })
+    }
+
+    cols.push({
+      id: 'created',
+      header: 'Created',
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    })
+
+    if (isPending.value) {
+      // Pending registrations: approve/reject instead of keys/access.
+      cols.push({
+        id: 'registration',
+        header: 'Registration',
+        cell: ({ row }) =>
+          h('div', { class: 'flex gap-2' }, [
+            h('button', { class: 'text-green-600 hover:text-green-800', onClick: () => approve(row.original.id) }, 'Approve'),
+            h('button', { class: 'text-red-500 hover:text-red-700', onClick: () => startReject(row.original.id) }, 'Reject'),
+          ]),
+      })
+    } else if (status.value !== 'rejected') {
+      // Active and All: API keys + access. Rejected users don't need them.
+      cols.push({
+        id: 'tokens',
+        header: 'API Keys',
+        cell: ({ row }) => h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys'),
+      })
+      cols.push({
+        id: 'access',
+        header: 'Access',
+        cell: ({ row }) => h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access'),
+      })
+    }
+
+    return cols
+  })
+
+  const showActions = computed(() => (isPending.value ? false : { edit: true, delete: true }))
+
+  const setStatus = (s?: string) => {
+    status.value = s
+    page.value = 1
+  }
 
   const handleSuccess = () => {
     showCreateDialog.value = false
-    queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+    invalidate()
   }
 
   const { mutate: deleteItem } = useMutation({
     mutationKey: ['users', 'delete'],
     mutationFn: deleteUser,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'list'] }),
+    onSuccess: invalidate,
     onError: (err) => console.error(err),
   })
 
   const handleDelete = (id: number) => deleteItem(id)
-
-  watchEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['users', 'list', { page, perPage }] })
-  })
 </script>
