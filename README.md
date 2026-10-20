@@ -81,3 +81,13 @@ Prettier (`.prettierrc.mjs`): 120 columns, 2 spaces, single quotes, no
 semicolons, `vueIndentScriptAndStyle: true`.
 
 > Never commit secrets. `.env` files here contain only host/URL config.
+
+## Deployment
+
+```sh
+./scripts/deploy-container.sh -U yohlime            # local build
+./scripts/deploy-container.sh -U yohlime --push     # build and push
+```
+
+Bump the version in `package.json` with `./scripts/bump-version.sh patch|minor|major`
+(add `--commit` to commit unsigned, `--tag` to also create `vX.Y.Z`).
