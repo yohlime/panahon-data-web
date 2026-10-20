@@ -5,7 +5,10 @@
         <button class="p-2 text-gray-700 md:hidden" aria-label="Open menu" @click="openMobileNav">
           <div class="i-mdi:menu text-2xl"></div>
         </button>
-        <a :href="route()" class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue md:text-white">Panahon</a>
+        <a :href="route()" class="flex items-center gap-2">
+          <img src="/mo-logo.png" alt="Manila Observatory" class="h-8 w-8 md:h-10 md:w-10 shrink-0" />
+          <span class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue md:text-white">Panahon</span>
+        </a>
       </div>
       <div class="flex items-center gap-1">
         <template v-if="!isLoggedIn">
