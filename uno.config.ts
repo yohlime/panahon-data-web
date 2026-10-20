@@ -1,4 +1,9 @@
 import { defineConfig, presetWind4, presetIcons, transformerDirectives } from 'unocss'
+import { loadEnv } from 'vite'
+
+// Public mount path (e.g. /sensors) so public/ asset URLs resolve under the base.
+const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '')
+const base = `${(env.APP_BASE ?? '/').replace(/\/$/, '')}`
 
 export default defineConfig({
   presets: [
@@ -80,15 +85,15 @@ export default defineConfig({
         }
         @font-face {
           font-family: "TrajanPro";
-          src: url("/assets/fonts/TrajanPro-Regular.woff2")format("woff2"),
-            url("/assets/fonts/TrajanPro-Regular.woff")format("woff");
+          src: url("${base}/assets/fonts/TrajanPro-Regular.woff2")format("woff2"),
+            url("${base}/assets/fonts/TrajanPro-Regular.woff")format("woff");
           font-weight: normal;
           font-style: normal;
         }
         @font-face {
           font-family: "TrajanPro";
-          src: url("/assets/fonts/TrajanPro-Bold.woff2")format("woff2"),
-            url("/assets/fonts/TrajanPro-Bold.woff")format("woff");
+          src: url("${base}/assets/fonts/TrajanPro-Bold.woff2")format("woff2"),
+            url("${base}/assets/fonts/TrajanPro-Bold.woff")format("woff");
           font-weight: bold;
           font-style: normal;
         }

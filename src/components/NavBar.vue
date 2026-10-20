@@ -6,7 +6,7 @@
           <div class="i-mdi:menu text-2xl"></div>
         </button>
         <a :href="route()" class="flex items-center gap-2">
-          <img src="/mo-logo.png" alt="Manila Observatory" class="h-8 w-8 md:h-10 md:w-10 shrink-0" />
+          <img :src="`${baseUrl}mo-logo.png`" alt="Manila Observatory" class="h-8 w-8 md:h-10 md:w-10 shrink-0" />
           <span class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue md:text-white">Panahon</span>
         </a>
       </div>
@@ -106,6 +106,7 @@
   import SignupForm from '@/components/form/SignUp.vue'
 
   const isLoggedIn = useStore($isLoggedIn)
+  const baseUrl = import.meta.env.BASE_URL
   const activeRoute = useStore($activeRoute)
   const stnPage = useStore($stnPage)
   const stnPerPage = useStore($stnPerPage)
