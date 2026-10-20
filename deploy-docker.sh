@@ -174,9 +174,7 @@ else
   aarch64 | arm64) PLATFORM="linux/arm64" ;;
   *) PLATFORM="" ;;
   esac
-  if [[ -n "$PLATFORM" ]]; then
-    ARCH_SUFFIX="${PLATFORM//\//-}"
-  else
+  if [[ -z "$PLATFORM" ]]; then
     echo "Note: unknown host architecture '${HOST_ARCH}', building for the engine default."
   fi
 fi
