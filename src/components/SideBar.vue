@@ -61,13 +61,17 @@
   const routes = useStore($routes)
   const open = useStore($mobileNavOpen)
 
-  const expanded = ref(true)
+  const expanded = ref(false)
 
   const normalize = (p: string) => (p.length > 1 ? p.replace(/\/$/, '') : p)
   const current = computed(() => normalize(props.path))
 
-  const activeRoute = computed(() => routes.value.filter((r) => r.visible).find((r) => normalize(r.to) === current.value))
-  const group = computed(() => activeRoute.value?.group ?? (current.value.startsWith('/settings') ? 'settings' : 'main'))
+  const activeRoute = computed(() =>
+    routes.value.filter((r) => r.visible).find((r) => normalize(r.to) === current.value),
+  )
+  const group = computed(
+    () => activeRoute.value?.group ?? (current.value.startsWith('/settings') ? 'settings' : 'main'),
+  )
   const activeName = computed(() => activeRoute.value?.name ?? '')
 
   onMounted(() => {

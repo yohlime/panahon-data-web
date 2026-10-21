@@ -1,20 +1,17 @@
 <template>
   <header>
-    <nav class="flex justify-between items-center bg-white p-3 md:new-navbar">
+    <nav class="flex items-center justify-between h-12 md:h-14 bg-white shadow-md px-2 md:px-6">
       <div class="flex items-center gap-2">
-        <button class="p-2 text-gray-700 md:hidden" aria-label="Open menu" @click="openMobileNav">
-          <div class="i-mdi:menu text-2xl"></div>
-        </button>
         <a :href="route()" class="flex items-center gap-2">
           <img :src="`${baseUrl}mo-logo.png`" alt="Manila Observatory" class="h-8 w-8 md:h-10 md:w-10 shrink-0" />
-          <span class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue md:text-white">Panahon</span>
+          <span class="font-trajan text-xl md:text-2xl tracking-3px text-mo-Blue relative top-[0.14em]">Panahon</span>
         </a>
       </div>
       <div class="flex items-center gap-1">
         <template v-if="!isLoggedIn">
           <button
             type="button"
-            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
             aria-label="Log in"
             title="Log in"
             @click="showLogin"
@@ -23,7 +20,7 @@
           </button>
           <button
             type="button"
-            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
             aria-label="Register"
             title="Register"
             @click="showSignUp"
@@ -34,7 +31,7 @@
         <template v-else>
           <a
             :href="route('settings')"
-            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
             aria-label="Settings"
             title="Settings"
           >
@@ -42,7 +39,7 @@
           </a>
           <button
             type="button"
-            class="p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+            class="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
             aria-label="Log out"
             title="Log out"
             @click="handleLogout"
@@ -50,6 +47,15 @@
             <div class="i-mdi:logout text-xl"></div>
           </button>
         </template>
+
+        <button
+          type="button"
+          class="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
+          aria-label="Open menu"
+          @click="openMobileNav"
+        >
+          <div class="i-mdi:menu text-2xl"></div>
+        </button>
       </div>
     </nav>
     <DialogRoot v-model:open="showDialog">
@@ -64,10 +70,7 @@
             <LoginForm @success="handleLoginSuccess" />
             <p class="text-sm font-light text-gray-500 dark:text-gray-400">
               Don’t have an account yet?
-              <a
-                href="#"
-                class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue"
-                @click.prevent="showSignUp"
+              <a href="#" class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue" @click.prevent="showSignUp"
                 >Sign up</a
               >
             </p>
@@ -76,10 +79,7 @@
             <SignupForm @success="handleSignupSuccess" />
             <p class="text-sm font-light text-gray-500 dark:text-gray-400">
               Already have an account?
-              <a
-                href="#"
-                class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue"
-                @click.prevent="showLogin"
+              <a href="#" class="font-medium text-mo-Blue hover:underline dark:text-mo-Blue" @click.prevent="showLogin"
                 >Login</a
               >
             </p>
