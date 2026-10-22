@@ -3,7 +3,7 @@
     <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
       {{ formTitle }}
     </h1>
-    <form class="space-y-3 w-full" @submit.prevent="handleSubmit">
+    <form class="space-y-3 w-full" @submit.prevent="submit">
       <Input name="name" v-model="name" v-bind="nameProps">Station Name</Input>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -46,7 +46,6 @@
           >Cancel</Button
         >
         <Button
-          :disabled="!meta.valid"
           :is-pending="isPending"
           :class="[
             'w-1/3 text-gray-200',
@@ -54,7 +53,6 @@
               ? 'bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30 dark:bg-mo-Blue dark:hover:bg-mo-Blue/90 dark:focus:ring-mo-Blue/40'
               : 'bg-mo-Blue/60 dark:bg-mo-Blue',
           ]"
-          @click.prevent="handleSubmit"
           >{{ isNew ? 'Add' : 'Save' }}</Button
         >
       </div>
@@ -96,7 +94,7 @@
     return e.response?.data?.error ?? e.message ?? 'Could not save the station'
   }
 
-  const { defineField, meta, setValues, values } = useForm({
+  const { defineField, handleSubmit, meta, setValues } = useForm({
     validationSchema: toTypedSchema(stationInputSchema),
     initialValues: isNew.value ? { station_type: 'MO', station_type2: 'Default', status: 'OFFLINE' } : undefined,
   })
@@ -144,9 +142,8 @@
   const stnTypes = computed(() => stationTypes.map(({ name }) => name))
   const stnTypes2 = computed(() => stationTypes.find(({ name }) => name === stnType.value)?.opts ?? [])
 
-  const handleSubmit = () => {
-    if (!meta.valid) return
+  const submit = handleSubmit((formValues) => {
     errorMessage.value = ''
-    mutate({ ...values, id: isNew.value ? undefined : itemID.value } as StationInput)
-  }
+    mutate({ ...formValues, id: isNew.value ? undefined : itemID.value } as StationInput)
+  })
 </script>

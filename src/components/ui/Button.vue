@@ -1,6 +1,6 @@
 <template>
   <button
-    type="submit"
+    :type="type"
     :class="[
       'flex justify-center items-center gap-1 font-medium rounded-lg text-sm px-5 py-2.5 text-center',
       !disabled ? 'focus:ring-4 focus:outline-none' : 'cursor-not-allowed',
@@ -17,9 +17,18 @@
 </template>
 
 <script setup lang="ts">
-  withDefaults(defineProps<{ disabled?: boolean; isPending?: boolean; pendingText?: string }>(), {
-    disabled: false,
-    isPending: false,
-    pendingText: 'Processing...',
-  })
+  withDefaults(
+    defineProps<{
+      type?: 'button' | 'submit' | 'reset'
+      disabled?: boolean
+      isPending?: boolean
+      pendingText?: string
+    }>(),
+    {
+      type: 'submit',
+      disabled: false,
+      isPending: false,
+      pendingText: 'Processing...',
+    },
+  )
 </script>
