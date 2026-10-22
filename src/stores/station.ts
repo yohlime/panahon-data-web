@@ -3,7 +3,7 @@ import { atom } from 'nanostores'
 import axios from '@/utils/axios'
 
 import { paginatedStationSchema, stationSchema, stationStatsSchema } from '@/schemas/station'
-import type { Station } from '@/types/station'
+import type { StationInput } from '@/types/station'
 
 const baseURL = '/stations'
 
@@ -65,7 +65,7 @@ export const getStation = async (stnID?: number) => {
   }
 }
 
-export const createOrUpdateStation = async (station: Station) => {
+export const createOrUpdateStation = async (station: StationInput) => {
   const { date_installed } = station
   const stn = { ...station, date_installed: date_installed !== '' ? date_installed : '0001-01-01' }
   const { data } = stn.id ? await axios.put(`${baseURL}/${stn.id}`, stn) : await axios.post(baseURL, stn)
