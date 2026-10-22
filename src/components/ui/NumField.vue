@@ -14,11 +14,11 @@
       <div
         class="flex items-center bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-mo-Blue/50 focus-border-mo-Blue w-full py-1 px-0.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-mo-Blue/40 dark:focus:border-mo-Blue"
       >
-        <NumberFieldDecrement class="px-1 py-2 disabled:opacity-20">
+        <NumberFieldDecrement class="shrink-0 px-1 py-2 disabled:opacity-20">
           <div class="i-mdi:minus text-xs" />
         </NumberFieldDecrement>
-        <NumberFieldInput class="bg-transparent tabular-nums text-center focus:outline-0 p-0.5 w-18" />
-        <NumberFieldIncrement class="px-1 py-2 disabled:opacity-20">
+        <NumberFieldInput class="min-w-0 flex-1 bg-transparent tabular-nums text-center focus:outline-0 p-0.5" />
+        <NumberFieldIncrement class="shrink-0 px-1 py-2 disabled:opacity-20">
           <div class="i-mdi:plus text-xs" />
         </NumberFieldIncrement>
       </div>
