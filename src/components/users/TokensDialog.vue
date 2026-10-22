@@ -24,6 +24,9 @@
         <div class="flex flex-col">
           <span class="text-sm font-medium">{{ tok.name }}</span>
           <span class="text-xs text-gray-500">{{ tok.token_prefix }}••••••••</span>
+          <span v-if="tokenHasNoStations(tok)" class="text-xs font-medium text-amber-700">
+            No station access — delete and recreate
+          </span>
         </div>
         <button class="i-mdi:delete text-xl text-red-400 hover:text-red-600" @click="handleDelete(tok.id)"></button>
       </li>
@@ -43,7 +46,7 @@
   import { computed, ref } from 'vue'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
 
-  import { createApiToken, deleteApiToken, listApiTokens } from '@/stores/apiToken'
+  import { createApiToken, deleteApiToken, listApiTokens, tokenHasNoStations } from '@/stores/apiToken'
   import type { APITokenWithSecret } from '@/types/apiToken'
 
   import Input from '@/components/ui/Input.vue'

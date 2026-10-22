@@ -18,6 +18,11 @@
       </p>
     </div>
 
+    <p v-if="invalidCount" class="text-sm text-amber-700">
+      {{ invalidCount }} key{{ invalidCount === 1 ? '' : 's' }} cannot access any station. Delete them and create a new
+      key.
+    </p>
+
     <div v-if="isLoading" class="flex justify-center p-4">
       <div class="i-mdi:loading animate-spin text-2xl"></div>
     </div>
@@ -58,13 +63,13 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { h, ref, computed } from 'vue'
   import { useStore } from '@nanostores/vue'
   import { formatRelative, parseISO } from 'date-fns'
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
   import { createColumnHelper } from '@tanstack/vue-table'
 
-  import { listApiTokens, deleteApiToken } from '@/stores/apiToken'
+  import { listApiTokens, deleteApiToken, tokenHasNoStations } from '@/stores/apiToken'
   import { getUserAccess, listUserAccessRequests, ACCESS_REQUEST_COOLDOWN_MS } from '@/stores/access'
   import { $authUserID, $isAdmin } from '@/stores/user'
   import { route } from '@/stores/routes'
@@ -88,6 +93,7 @@
   })
 
   const items = computed(() => data.value)
+  const invalidCount = computed(() => (items.value ?? []).filter(tokenHasNoStations).length)
   const isAdmin = useStore($isAdmin)
 
   const { isLoading: isLoadingAccess, data: access } = useQuery({
@@ -125,6 +131,21 @@
 
   const columns = [
     columnHelper.accessor('name', { header: 'Name' }),
+    columnHelper.display({
+      id: 'status',
+      header: 'Status',
+      cell: ({ row }) =>
+        tokenHasNoStations(row.original)
+          ? h(
+              'span',
+              {
+                class:
+                  'inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800',
+              },
+              'No station access',
+            )
+          : h('span', { class: 'text-xs text-gray-500' }, 'Active'),
+    }),
     columnHelper.accessor('token_prefix', {
       header: 'Token',
       cell: ({ row }) => `${row.original.token_prefix}••••••••`,
