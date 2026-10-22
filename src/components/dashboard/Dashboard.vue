@@ -32,7 +32,7 @@
   import { formatDistanceToNow } from 'date-fns'
 
   import { listLatestObservations } from '@/stores/observation'
-  import { listStations } from '@/stores/station'
+  import { getStationStats } from '@/stores/station'
   import { listApiTokens } from '@/stores/apiToken'
   import { getUserAccess, listAccessRequests } from '@/stores/access'
   import { $authUserID, $isLoggedIn, $isAdmin, $isSuperAdmin, listUsers } from '@/stores/user'
@@ -47,7 +47,11 @@
   const userID = useStore($authUserID)
 
   const { data: latest } = useQuery({ queryKey: ['observations', 'latest'], queryFn: listLatestObservations })
-  const { data: stations } = useQuery({ queryKey: ['stations', 'accessible'], queryFn: listStations, enabled: isLoggedIn })
+  const { data: stats } = useQuery({
+    queryKey: ['stations', 'stats', 'accessible'],
+    queryFn: () => getStationStats(true),
+    enabled: isLoggedIn,
+  })
   const { data: apiTokens } = useQuery({
     queryKey: ['users', userID, 'api-tokens'],
     queryFn: () => listApiTokens(userID.value!),
@@ -79,12 +83,10 @@
   )
   const newestAbsolute = computed(() => newestTimestamp.value?.toLocaleString() ?? '')
 
-  const stationItems = computed(() => stations.value?.items ?? [])
-  const myStationCount = computed(() => stations.value?.count ?? 0)
-  const myStationIds = computed(() => new Set(stationItems.value.map((s) => s.id)))
-  const myReportingCount = computed(() => (latest.value ?? []).filter((o) => myStationIds.value.has(o.id)).length)
-  const onlineCount = computed(() => stationItems.value.filter((s) => s.status === 'ONLINE').length)
-  const offlineCount = computed(() => stationItems.value.length - onlineCount.value)
+  const myStationCount = computed(() => stats.value?.total ?? 0)
+  const myReportingCount = computed(() => stats.value?.reporting ?? 0)
+  const onlineCount = computed(() => stats.value?.online ?? 0)
+  const offlineCount = computed(() => stats.value?.offline ?? 0)
 
   const apiKeyCount = computed(() => apiTokens.value?.length ?? 0)
   const pendingRequests = computed(() => pending.value?.count ?? 0)

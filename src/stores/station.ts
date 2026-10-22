@@ -2,7 +2,7 @@ import { atom } from 'nanostores'
 
 import axios from '@/utils/axios'
 
-import { paginatedStationSchema, stationSchema } from '@/schemas/station'
+import { paginatedStationSchema, stationSchema, stationStatsSchema } from '@/schemas/station'
 import type { Station } from '@/types/station'
 
 const baseURL = '/stations'
@@ -42,6 +42,13 @@ export const listStations = async () => {
   const { data } = await axios.get(url)
   const s = paginatedStationSchema.parse(data)
   return s
+}
+
+// Aggregate counts for the dashboard. The list endpoint is paginated, so the
+// cards must not be computed from a single page.
+export const getStationStats = async (accessible = true) => {
+  const { data } = await axios.get(`${baseURL}/stats${accessible ? '?accessible=true' : ''}`)
+  return stationStatsSchema.parse(data)
 }
 
 // All stations (the list endpoint is public) for pickers.

@@ -20,3 +20,10 @@ export const stationSchema = z.object({
 })
 
 export const paginatedStationSchema = makePaginatedSchema(stationSchema)
+
+export const stationStatsSchema = z.object({
+  total: z.number(),
+  online: z.number(),
+  offline: z.number(),
+  reporting: z.number(),
+})
