@@ -3,7 +3,7 @@
     <h1 class="text-2xl font-bold">Dashboard</h1>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Reporting (last hour)" :value="reportingCount" icon="mdi-access-point" />
+      <StatCard :label="`Reporting (${reportingWindowLabel})`" :value="reportingCount" icon="mdi-access-point" />
       <StatCard label="Newest Reading" :value="newestRelative" :hint="newestAbsolute" icon="mdi-clock-outline" />
 
       <template v-if="isLoggedIn">
@@ -47,6 +47,10 @@
   const userID = useStore($authUserID)
 
   const { data: latest } = useQuery({ queryKey: ['observations', 'latest'], queryFn: listLatestObservations })
+  const { data: publicStats } = useQuery({
+    queryKey: ['stations', 'stats', 'public'],
+    queryFn: () => getStationStats(false),
+  })
   const { data: stats } = useQuery({
     queryKey: ['stations', 'stats', 'accessible'],
     queryFn: () => getStationStats(true),
@@ -69,7 +73,15 @@
   })
   const { data: users } = useQuery({ queryKey: ['users', 'list'], queryFn: listUsers, enabled: isSuperAdmin })
 
-  const reportingCount = computed(() => latest.value?.length ?? 0)
+  const reportingCount = computed(() => publicStats.value?.reporting ?? latest.value?.length ?? 0)
+  const reportingWindowLabel = computed(() => {
+    const seconds = publicStats.value?.window_seconds
+    if (!seconds) return 'recent'
+    if (seconds === 3600) return 'last hour'
+    if (seconds % 3600 === 0) return `last ${seconds / 3600} hours`
+    if (seconds % 60 === 0) return `last ${seconds / 60} minutes`
+    return `last ${seconds} seconds`
+  })
 
   const newestTimestamp = computed(() => {
     const times = (latest.value ?? [])

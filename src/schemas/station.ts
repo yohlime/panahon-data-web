@@ -26,4 +26,5 @@ export const stationStatsSchema = z.object({
   online: z.number(),
   offline: z.number(),
   reporting: z.number(),
+  window_seconds: z.number(),
 })
