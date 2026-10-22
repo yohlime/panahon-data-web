@@ -23,7 +23,17 @@
 
       <section class="bg-white rounded-lg p-4 shadow-sm">
         <h2 class="text-lg font-semibold mb-3">Request additional access</h2>
+        <div v-if="isLoadingRequests" class="text-sm text-gray-500">Loading…</div>
+        <p v-else-if="pendingRequest" class="text-sm text-amber-700">
+          You have a pending request (#{{ pendingRequest.id }}). You can request more after it is reviewed, or cancel it
+          below.
+        </p>
+        <p v-else-if="cooldownUntil" class="text-sm text-amber-700">
+          Your last request was denied. You can request again after {{ cooldownUntil.toLocaleString() }}.
+        </p>
+        <p v-if="requestError" class="text-sm text-red-600">{{ requestError }}</p>
         <AccessForm
+          v-else
           ref="formRef"
           :station-options="stationOptions"
           :variable-options="variableOptions"
@@ -66,7 +76,13 @@
   import { useStore } from '@nanostores/vue'
   import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
-  import { cancelUserAccessRequest, createUserAccessRequest, getUserAccess, listUserAccessRequests } from '@/stores/access'
+  import {
+    ACCESS_REQUEST_COOLDOWN_MS,
+    cancelUserAccessRequest,
+    createUserAccessRequest,
+    getUserAccess,
+    listUserAccessRequests,
+  } from '@/stores/access'
   import { listAllStations } from '@/stores/station'
   import { $authUserID, $isAdmin } from '@/stores/user'
   import { ACCESS_VARIABLES } from '@/schemas/access'
@@ -83,10 +99,25 @@
     queryFn: () => getUserAccess(userID.value!),
     enabled: () => !!userID.value,
   })
-  const { data: requests } = useQuery({
+  const { isLoading: isLoadingRequests, data: requests } = useQuery({
     queryKey: ['users', userID, 'access-requests'],
     queryFn: () => listUserAccessRequests(userID.value!),
     enabled: () => !!userID.value,
+  })
+
+  const pendingRequest = computed(() => requests.value?.find((r) => r.status === 'pending') ?? null)
+  const latestDenied = computed<AccessRequest | null>(() => {
+    const denied = (requests.value ?? []).filter((r) => r.status === 'denied' && r.reviewed_at)
+    return denied.reduce<AccessRequest | null>((latest, r) => {
+      if (!latest?.reviewed_at) return r
+      return new Date(r.reviewed_at!).getTime() > new Date(latest.reviewed_at).getTime() ? r : latest
+    }, null)
+  })
+  const cooldownUntil = computed(() => {
+    const reviewed = latestDenied.value?.reviewed_at
+    if (!reviewed) return null
+    const until = new Date(new Date(reviewed).getTime() + ACCESS_REQUEST_COOLDOWN_MS)
+    return until.getTime() > Date.now() ? until : null
   })
   const { data: stations } = useQuery({ queryKey: ['stations', 'all'], queryFn: listAllStations })
 
@@ -116,6 +147,12 @@
     { immediate: true },
   )
 
+  const requestError = ref('')
+  const extractError = (err: unknown) => {
+    const e = err as { response?: { data?: { error?: string } }; message?: string }
+    return e.response?.data?.error ?? e.message ?? 'Could not submit the request'
+  }
+
   const { isPending, mutate } = useMutation({
     mutationKey: ['access', 'requests', 'create'],
     mutationFn: (values: AccessFormValues) =>
@@ -128,12 +165,19 @@
         reason: values.reason,
       }),
     onSuccess: () => {
+      requestError.value = ''
       formRef.value?.reset()
       queryClient.invalidateQueries({ queryKey: ['users', userID.value, 'access-requests'] })
     },
+    onError: (err) => {
+      requestError.value = extractError(err)
+    },
   })
 
-  const onRequest = (values: AccessFormValues) => mutate(values)
+  const onRequest = (values: AccessFormValues) => {
+    requestError.value = ''
+    mutate(values)
+  }
 
   const { mutate: doCancel } = useMutation({
     mutationKey: ['access', 'requests', 'cancel'],

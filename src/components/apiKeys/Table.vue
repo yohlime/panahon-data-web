@@ -1,10 +1,21 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-end">
-      <Button @click="showCreateDialog = true">
+    <div class="flex flex-col items-end gap-2">
+      <Button :disabled="!canCreate" @click="showCreateDialog = true">
         <div class="i-mdi:plus"></div>
         Create API Key
       </Button>
+      <p v-if="!isAdmin && !canCreate" class="text-right text-sm text-gray-500">
+        <template v-if="checking">Checking access…</template>
+        <template v-else-if="pendingRequest">Access request pending approval.</template>
+        <template v-else-if="cooldownUntil">
+          Access request denied. You can request again after {{ cooldownUntil.toLocaleString() }}.
+        </template>
+        <template v-else>
+          You need access to at least one station.
+          <a :href="route('settings/access')" class="text-mo-Blue hover:underline">Request access</a>
+        </template>
+      </p>
     </div>
 
     <div v-if="isLoading" class="flex justify-center p-4">
@@ -54,7 +65,10 @@
   import { createColumnHelper } from '@tanstack/vue-table'
 
   import { listApiTokens, deleteApiToken } from '@/stores/apiToken'
-  import { $authUserID } from '@/stores/user'
+  import { getUserAccess, listUserAccessRequests, ACCESS_REQUEST_COOLDOWN_MS } from '@/stores/access'
+  import { $authUserID, $isAdmin } from '@/stores/user'
+  import { route } from '@/stores/routes'
+  import type { AccessRequest } from '@/types/access'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
   import Table from '@/components/ui/Table.vue'
@@ -74,6 +88,38 @@
   })
 
   const items = computed(() => data.value)
+  const isAdmin = useStore($isAdmin)
+
+  const { isLoading: isLoadingAccess, data: access } = useQuery({
+    queryKey: ['users', userID, 'access'],
+    queryFn: () => getUserAccess(userID.value!),
+    enabled: () => !!userID.value,
+  })
+  const { isLoading: isLoadingRequests, data: requests } = useQuery({
+    queryKey: ['users', userID, 'access-requests'],
+    queryFn: () => listUserAccessRequests(userID.value!),
+    enabled: () => !!userID.value,
+  })
+
+  const checking = computed(() => isLoadingAccess.value || isLoadingRequests.value)
+  const hasStationAccess = computed(
+    () => isAdmin.value || access.value?.station_ids === null || (access.value?.station_ids?.length ?? 0) > 0,
+  )
+  const canCreate = computed(() => isAdmin.value || hasStationAccess.value)
+  const pendingRequest = computed(() => requests.value?.find((r) => r.status === 'pending') ?? null)
+  const latestDenied = computed<AccessRequest | null>(() => {
+    const denied = (requests.value ?? []).filter((r) => r.status === 'denied' && r.reviewed_at)
+    return denied.reduce<AccessRequest | null>((latest, r) => {
+      if (!latest?.reviewed_at) return r
+      return new Date(r.reviewed_at!).getTime() > new Date(latest.reviewed_at).getTime() ? r : latest
+    }, null)
+  })
+  const cooldownUntil = computed(() => {
+    const reviewed = latestDenied.value?.reviewed_at
+    if (!reviewed) return null
+    const until = new Date(new Date(reviewed).getTime() + ACCESS_REQUEST_COOLDOWN_MS)
+    return until.getTime() > Date.now() ? until : null
+  })
 
   const columnHelper = createColumnHelper<APIToken>()
 

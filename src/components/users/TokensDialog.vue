@@ -1,8 +1,6 @@
 <template>
   <div class="w-full flex flex-col gap-4">
-    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-      API Keys
-    </h1>
+    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">API Keys</h1>
 
     <form class="flex items-end gap-2" @submit.prevent="handleCreate">
       <Input name="name" v-model="name" class="flex-1">Name</Input>
@@ -14,6 +12,8 @@
         >Add</Button
       >
     </form>
+
+    <p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
 
     <div v-if="isLoading" class="flex justify-center p-4">
       <div class="i-mdi:loading animate-spin text-2xl"></div>
@@ -58,6 +58,12 @@
 
   const name = ref('')
   const newToken = ref('')
+  const errorMessage = ref('')
+
+  const extractError = (err: unknown) => {
+    const e = err as { response?: { data?: { error?: string } }; message?: string }
+    return e.response?.data?.error ?? e.message ?? 'Could not create API key'
+  }
 
   const { isLoading, data } = useQuery({
     queryKey,
@@ -71,8 +77,12 @@
     mutationFn: (n: string) => createApiToken(props.userID, { name: n }),
     onSuccess: (d: APITokenWithSecret) => {
       name.value = ''
+      errorMessage.value = ''
       newToken.value = d.token
       queryClient.invalidateQueries({ queryKey })
+    },
+    onError: (err) => {
+      errorMessage.value = extractError(err)
     },
   })
 
@@ -84,6 +94,7 @@
 
   const handleCreate = () => {
     if (!name.value) return
+    errorMessage.value = ''
     createToken(name.value)
   }
 

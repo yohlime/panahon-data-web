@@ -9,6 +9,8 @@ import {
 } from '@/schemas/access'
 import type { AccessRequestStatus, CreateAccessRequestReq, UpdateUserAccessReq } from '@/types/access'
 
+export const ACCESS_REQUEST_COOLDOWN_MS = 24 * 60 * 60 * 1000
+
 export const getUserAccess = async (userID: number) => {
   const { data } = await axios.get(`/users/${userID}/access`)
   return userAccessSchema.parse(data)

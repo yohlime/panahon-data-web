@@ -3,7 +3,20 @@
     <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
       Create API Key
     </h1>
-    <form class="space-y-3 w-full" @submit.prevent="handleSubmit">
+    <div v-if="!isAdmin && access === undefined" class="text-sm text-gray-500">Checking access…</div>
+    <div v-else-if="!hasStationAccess" class="flex flex-col gap-3">
+      <p class="text-sm text-gray-600">You need access to at least one station before creating an API key.</p>
+      <a :href="route('settings/access')" class="text-sm font-medium text-mo-Blue hover:underline">Request access</a>
+      <div class="flex justify-end">
+        <Button
+          type="button"
+          class="bg-gray-200 border border-gray-400 hover:bg-gray-300"
+          @click.prevent="emit('close')"
+          >Close</Button
+        >
+      </div>
+    </div>
+    <form v-else class="space-y-3 w-full" @submit.prevent="handleSubmit">
       <Input name="name" v-model="name" v-bind="nameProps">Name</Input>
 
       <ScopeSelects
@@ -15,6 +28,8 @@
         :max-days-options="maxDaysOptions"
       />
 
+      <p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
+
       <div class="flex justify-end gap-2 mt-4">
         <Button
           type="button"
@@ -23,11 +38,11 @@
           >Cancel</Button
         >
         <Button
-          :disabled="!meta.valid"
+          :disabled="!canSubmit"
           :is-pending="isPending"
           :class="[
             'w-1/3 text-gray-200',
-            meta.valid
+            canSubmit
               ? 'bg-mo-Blue hover:bg-mo-Blue/90 focus:ring-mo-Blue/30 dark:bg-mo-Blue dark:hover:bg-mo-Blue/90 dark:focus:ring-mo-Blue/40'
               : 'bg-mo-Blue/60 dark:bg-mo-Blue',
           ]"
@@ -49,7 +64,8 @@
   import { createApiToken } from '@/stores/apiToken'
   import { getUserAccess } from '@/stores/access'
   import { listAllStations } from '@/stores/station'
-  import { $authUserID } from '@/stores/user'
+  import { $authUserID, $isAdmin } from '@/stores/user'
+  import { route } from '@/stores/routes'
   import { ACCESS_VARIABLES } from '@/schemas/access'
   import { createAPITokenArgsSchema } from '@/schemas/apiToken'
   import type { APITokenWithSecret, CreateAPITokenReq } from '@/types/apiToken'
@@ -66,6 +82,7 @@
   }>()
 
   const userID = useStore($authUserID)
+  const isAdmin = useStore($isAdmin)
 
   // A key can only be as broad as its owner's entitlement, so the picker is
   // limited to (and defaults to) that entitlement.
@@ -76,18 +93,23 @@
   })
   const { data: stations } = useQuery({ queryKey: ['stations', 'all'], queryFn: listAllStations })
 
+  const hasStationAccess = computed(
+    () => isAdmin.value || access.value?.station_ids === null || (access.value?.station_ids?.length ?? 0) > 0,
+  )
+
   const stationOptions = computed(() => {
     const items = stations.value?.items ?? []
-    const ids = access.value?.station_ids
+    const ids = isAdmin.value ? null : access.value?.station_ids
     return (ids == null ? items : items.filter((s) => ids.includes(s.id))).map((s) => ({ value: s.id, label: s.name }))
   })
   const variableOptions = computed(() => {
-    const vars = access.value?.variables
+    const vars = isAdmin.value ? null : access.value?.variables
     return (vars == null ? [...ACCESS_VARIABLES] : vars).map((v) => ({ value: v, label: v }))
   })
 
   // Only offer history within the entitlement (unlimited opens every option).
   const maxDaysOptions = computed(() => {
+    if (isAdmin.value) return MAX_DAYS_OPTIONS
     const ent = access.value?.max_days_history
     if (ent == null || ent === -1) return MAX_DAYS_OPTIONS
     if (ent === 0) return MAX_DAYS_OPTIONS.filter((o) => o.value === 365)
@@ -101,8 +123,14 @@
   const maxDaysSel = ref(365)
 
   watch(
-    access,
-    (a) => {
+    [access, isAdmin],
+    ([a, admin]) => {
+      if (admin) {
+        stationsSel.value = [MULTISELECT_ALL]
+        variablesSel.value = [MULTISELECT_ALL]
+        maxDaysSel.value = -1
+        return
+      }
       if (!a) return
       stationsSel.value = a.station_ids === null ? [MULTISELECT_ALL] : a.station_ids
       variablesSel.value = a.variables === null ? [MULTISELECT_ALL] : a.variables
@@ -118,13 +146,28 @@
     validationSchema: toTypedSchema(createAPITokenArgsSchema),
   })
 
+  const canSubmit = computed(
+    () =>
+      meta.value.valid &&
+      hasStationAccess.value &&
+      (hasAll(stationsSel.value) || selected(stationsSel.value).length > 0),
+  )
+
+  const errorMessage = ref('')
+  const extractError = (err: unknown) => {
+    const e = err as { response?: { data?: { error?: string } }; message?: string }
+    return e.response?.data?.error ?? e.message ?? 'Could not create API key'
+  }
+
   const { mutate, isPending } = useMutation({
     mutationKey: ['api-tokens', 'create'],
     mutationFn: (args: CreateAPITokenReq) => createApiToken(userID.value!, args),
     onSuccess: (d: APITokenWithSecret) => {
+      errorMessage.value = ''
       emit('success', d)
     },
     onError: (err) => {
+      errorMessage.value = extractError(err)
       emit('error', err)
     },
   })
@@ -134,7 +177,8 @@
   })
 
   const handleSubmit = () => {
-    if (!meta.value.valid) return
+    if (!canSubmit.value) return
+    errorMessage.value = ''
     mutate({
       name: values.name ?? '',
       permissions: {
