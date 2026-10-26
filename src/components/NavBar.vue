@@ -8,6 +8,16 @@
         </a>
       </div>
       <div class="flex items-center gap-1">
+        <a
+          :href="docsUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
+          aria-label="API Docs"
+          title="API Docs"
+        >
+          <div class="i-mdi:book-open-page-variant text-xl"></div>
+        </a>
         <template v-if="!isLoggedIn">
           <button
             type="button"
@@ -107,6 +117,7 @@
 
   const isLoggedIn = useStore($isLoggedIn)
   const baseUrl = import.meta.env.BASE_URL
+  const docsUrl = `${(import.meta.env.PUBLIC_PANAHON_API ?? '').replace(/\/$/, '')}/public-docs`
   const activeRoute = useStore($activeRoute)
   const stnPage = useStore($stnPage)
   const stnPerPage = useStore($stnPerPage)
