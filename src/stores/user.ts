@@ -3,13 +3,18 @@ import { atom, computed } from 'nanostores'
 import axios from '@/utils/axios'
 
 import {
+  completeRegistrationArgsSchema,
   createUserArgsSchema,
+  createUserResponseSchema,
   paginatedUserSchema,
+  registrationInfoSchema,
+  registrationLinkResponseSchema,
   updateProfileArgsSchema,
   updateUserArgsSchema,
   userSchema,
 } from '@/schemas/user'
 import type {
+  CompleteRegistrationReq,
   CreateUserReq,
   UpdateProfileReq,
   UpdateUserReq,
@@ -72,8 +77,7 @@ export const $isAdmin = computed(
 )
 export const $isSuperAdmin = computed(
   [$isLoggedIn, $authUser],
-  (isLoggedIn, user) =>
-    isLoggedIn && user?.roles !== undefined && user.roles?.includes('SUPERADMIN'),
+  (isLoggedIn, user) => isLoggedIn && user?.roles !== undefined && user.roles?.includes('SUPERADMIN'),
 )
 
 export const $page = atom(1)
@@ -106,7 +110,22 @@ export const getUserByID = async (userID?: number) => {
 export const createUser = async (args: CreateUserReq) => {
   const parsed = createUserArgsSchema.parse(args)
   const { data } = await axios.post(baseUrl, parsed)
-  return userSchema.parse(data)
+  return createUserResponseSchema.parse(data)
+}
+
+export const createRegistrationLink = async (userID: number) => {
+  const { data } = await axios.post(`${baseUrl}/${userID}/registration-link`)
+  return registrationLinkResponseSchema.parse(data)
+}
+
+export const validateRegistration = async (token: string) => {
+  const { data } = await axios.post(`${baseUrl}/complete-registration/validate`, { token })
+  return registrationInfoSchema.parse(data)
+}
+
+export const completeRegistration = async (args: CompleteRegistrationReq) => {
+  const parsed = completeRegistrationArgsSchema.parse(args)
+  await axios.post(`${baseUrl}/complete-registration/accept`, parsed)
 }
 
 export const updateUser = async (args: UpdateUserReq) => {

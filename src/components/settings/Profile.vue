@@ -4,7 +4,7 @@
 
     <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
       <Input name="username" v-model="username" v-bind="usernameProps">Username</Input>
-      <Input type="email" name="email" v-model="email" v-bind="emailProps">Email</Input>
+      <Input type="email" name="email" v-model="email" v-bind="emailProps">Email (optional)</Input>
       <Input type="password" name="password" v-model="password" v-bind="passwordProps"
         >New password (leave blank to keep)</Input
       >
@@ -95,7 +95,7 @@
     onError: (err: unknown) => {
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Could not update profile'
-      setFieldError('current_password', message)
+      setFieldError(message.toLowerCase().includes('email') ? 'email' : 'current_password', message)
     },
   })
 

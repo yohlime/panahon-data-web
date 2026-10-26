@@ -1,0 +1,10 @@
+---
+import PublicLayout from '@/layouts/PublicLayout.astro'
+import CompleteRegistration from '@/components/auth/CompleteRegistration.vue'
+
+Astro.response.headers.set('Cache-Control', 'no-store')
+---
+
+<PublicLayout>
+  <CompleteRegistration client:load />
+</PublicLayout>

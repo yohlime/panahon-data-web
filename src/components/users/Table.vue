@@ -28,7 +28,9 @@
       :show-actions="showActions"
       @delete-item="handleDelete"
     >
-      <template #edit-form="{ itemID, close }"><Form :itemID="itemID" @close="close" @success="handleSuccess" /></template>
+      <template #edit-form="{ itemID, close }"
+        ><Form :itemID="itemID" @close="close" @success="handleSuccess"
+      /></template>
     </Table>
 
     <Pagination
@@ -106,6 +108,30 @@
         </DialogContent>
       </DialogPortal>
     </DialogRoot>
+
+    <DialogRoot v-model:open="showRegistrationDialog" v-slot="{ close }">
+      <DialogPortal>
+        <DialogOverlay class="bg-gray-900/40 data-[state=open]:animate-overlayShow fixed inset-0 z-30" />
+        <DialogContent
+          class="data-[state=open]:animate-contentShow fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[560px] translate-x-[-50%] translate-y-[-50%] rounded-[6px] bg-white p-[25px] shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] focus:outline-none z-[100]"
+          :aria-describedby="undefined"
+        >
+          <div class="flex w-full flex-col gap-4">
+            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900">Registration link</h1>
+            <p class="text-sm text-gray-600">
+              Copy this link and send it to the user. It is shown only when generated, is single-use, and expires.
+            </p>
+            <Input name="registration-link" :model-value="registrationURL" readonly />
+            <div class="flex justify-end gap-2">
+              <Button class="bg-gray-200 border border-gray-400 hover:bg-gray-300" @click="close">Close</Button>
+              <Button class="text-gray-200 bg-mo-Blue hover:bg-mo-Blue/90" @click="copyRegistrationLink">
+                {{ linkCopied ? 'Copied' : 'Copy link' }}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
   </div>
 </template>
 
@@ -115,7 +141,15 @@
   import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query'
   import type { ColumnDef } from '@tanstack/vue-table'
 
-  import { $page, $perPage, approveUser, deleteUser, listUsers, rejectUser } from '@/stores/user'
+  import {
+    $page,
+    $perPage,
+    approveUser,
+    createRegistrationLink,
+    deleteUser,
+    listUsers,
+    rejectUser,
+  } from '@/stores/user'
   import type { User } from '@/types/user'
 
   import { DialogContent, DialogOverlay, DialogPortal, DialogRoot } from 'reka-ui'
@@ -130,6 +164,7 @@
   // `undefined` = the "All" tab (no status filter). Active is first and default.
   const statuses: { label: string; value: string | undefined }[] = [
     { label: 'Active', value: 'active' },
+    { label: 'Invited', value: 'invited' },
     { label: 'Pending', value: 'pending' },
     { label: 'Rejected', value: 'rejected' },
     { label: 'All', value: undefined },
@@ -155,6 +190,9 @@
   const showTokensDialog = ref(false)
   const showAccessDialog = ref(false)
   const showRejectDialog = ref(false)
+  const showRegistrationDialog = ref(false)
+  const registrationURL = ref('')
+  const linkCopied = ref(false)
   const selectedUserID = ref(0)
   const selectedAccessUserID = ref(0)
   const rejectID = ref(0)
@@ -168,6 +206,23 @@
   const openAccess = (userID: number) => {
     selectedAccessUserID.value = userID
     showAccessDialog.value = true
+  }
+
+  const showRegistrationLink = async (userID: number) => {
+    try {
+      const { registration_url } = await createRegistrationLink(userID)
+      registrationURL.value = registration_url
+      linkCopied.value = false
+      showRegistrationDialog.value = true
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const copyRegistrationLink = async () => {
+    await navigator.clipboard.writeText(registrationURL.value)
+    linkCopied.value = true
+    setTimeout(() => (linkCopied.value = false), 2000)
   }
 
   const { mutate: approve } = useMutation({
@@ -199,13 +254,18 @@
   }
 
   const statusClass = (s: string) =>
-    ({ pending: 'text-yellow-600', active: 'text-green-600', rejected: 'text-red-600' })[s] ?? 'text-gray-500'
+    ({ invited: 'text-blue-600', pending: 'text-yellow-600', active: 'text-green-600', rejected: 'text-red-600' })[s] ??
+    'text-gray-500'
 
   const columns = computed<ColumnDef<User>[]>(() => {
     const cols: ColumnDef<User>[] = [
       { accessorKey: 'username', header: 'Username' },
-      { accessorKey: 'full_name', header: 'Full Name' },
-      { accessorKey: 'email', header: 'Email' },
+      {
+        id: 'full_name',
+        header: 'Full Name',
+        cell: ({ row }) => row.original.full_name || row.original.username,
+      },
+      { id: 'email', header: 'Email', cell: ({ row }) => row.original.email || '—' },
       { id: 'roles', header: 'Roles', cell: ({ row }) => (row.original.roles ?? []).join(', ') },
     ]
 
@@ -231,22 +291,49 @@
         header: 'Registration',
         cell: ({ row }) =>
           h('div', { class: 'flex gap-2' }, [
-            h('button', { class: 'text-green-600 hover:text-green-800', onClick: () => approve(row.original.id) }, 'Approve'),
-            h('button', { class: 'text-red-500 hover:text-red-700', onClick: () => startReject(row.original.id) }, 'Reject'),
+            h(
+              'button',
+              { class: 'text-green-600 hover:text-green-800', onClick: () => approve(row.original.id) },
+              'Approve',
+            ),
+            h(
+              'button',
+              { class: 'text-red-500 hover:text-red-700', onClick: () => startReject(row.original.id) },
+              'Reject',
+            ),
           ]),
       })
     } else if (status.value !== 'rejected') {
-      // Active and All: API keys + access. Rejected users don't need them.
-      cols.push({
-        id: 'tokens',
-        header: 'API Keys',
-        cell: ({ row }) => h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys'),
-      })
-      cols.push({
-        id: 'access',
-        header: 'Access',
-        cell: ({ row }) => h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access'),
-      })
+      if (status.value === 'invited' || isAll.value) {
+        cols.push({
+          id: 'registration-link',
+          header: 'Registration',
+          cell: ({ row }) =>
+            row.original.status === 'invited'
+              ? h(Button, { onClick: () => showRegistrationLink(row.original.id) }, () => 'Registration link')
+              : '',
+        })
+      }
+
+      // Active and All: API keys + access. Rejected and invited users don't need them.
+      if (status.value !== 'invited') {
+        cols.push({
+          id: 'tokens',
+          header: 'API Keys',
+          cell: ({ row }) =>
+            row.original.status === 'invited'
+              ? ''
+              : h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys'),
+        })
+        cols.push({
+          id: 'access',
+          header: 'Access',
+          cell: ({ row }) =>
+            row.original.status === 'invited'
+              ? ''
+              : h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access'),
+        })
+      }
     }
 
     return cols
@@ -259,9 +346,14 @@
     page.value = 1
   }
 
-  const handleSuccess = () => {
+  const handleSuccess = (result: { user: User; registration_url?: string }) => {
     showCreateDialog.value = false
     invalidate()
+    if (result.registration_url) {
+      registrationURL.value = result.registration_url
+      linkCopied.value = false
+      showRegistrationDialog.value = true
+    }
   }
 
   const { mutate: deleteItem } = useMutation({

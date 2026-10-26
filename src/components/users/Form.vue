@@ -5,11 +5,20 @@
     </h1>
     <form class="space-y-2 w-full" @submit.prevent="handleSubmit">
       <Input name="username" v-model="username" v-bind="usernameProps" :disabled="!isNew">Username</Input>
-      <Input name="full-name" v-model="fullName" v-bind="fullNameProps">Full Name</Input>
-      <Input name="email" v-model="email" v-bind="emailProps">Email</Input>
-      <Input name="password" type="password" v-model="password" v-bind="passwordProps">
-        {{ isNew ? 'Password' : 'Password (leave blank to keep)' }}
+      <Input name="full-name" v-model="fullName" v-bind="fullNameProps">Full Name (optional)</Input>
+      <Input name="email" v-model="email" v-bind="emailProps">Email (optional)</Input>
+      <Input
+        v-if="!isNew && data?.status === 'active'"
+        name="password"
+        type="password"
+        v-model="password"
+        v-bind="passwordProps"
+      >
+        Password (leave blank to keep)
       </Input>
+      <p v-if="isNew" class="text-sm text-gray-500">
+        A registration link will be generated for you to copy and send to the user instead of a password.
+      </p>
       <div>
         <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Roles</label>
         <div class="flex gap-4">
@@ -52,22 +61,20 @@
 
   import { $isSuperAdmin, createUser, getUserByID, updateUser } from '@/stores/user'
   import { createUserArgsSchema, updateUserArgsSchema } from '@/schemas/user'
-  import type { CreateUserReq, User } from '@/types/user'
+  import type { CreateUserReq, CreateUserResponse, User } from '@/types/user'
 
   import Input from '@/components/ui/Input.vue'
   import Button from '@/components/ui/Button.vue'
 
   // Only a superadmin may grant the SUPERADMIN role.
   const isSuperAdmin = useStore($isSuperAdmin)
-  const roleOptions = computed(() =>
-    isSuperAdmin.value ? ['USER', 'ADMIN', 'SUPERADMIN'] : ['USER', 'ADMIN'],
-  )
+  const roleOptions = computed(() => (isSuperAdmin.value ? ['USER', 'ADMIN', 'SUPERADMIN'] : ['USER', 'ADMIN']))
 
   const props = withDefaults(defineProps<{ itemID?: number }>(), { itemID: 0 })
 
   const emit = defineEmits<{
     close: []
-    success: [d: User]
+    success: [d: { user: User; registration_url?: string }]
     error: [err: Error]
   }>()
 
@@ -96,16 +103,18 @@
 
   const { isPending, mutate } = useMutation({
     mutationKey: isNew.value ? ['users', 'create'] : ['users', 'update', itemID],
-    mutationFn: async (payload: CreateUserReq) => {
+    mutationFn: async (payload: CreateUserReq): Promise<{ user: User; registration_url?: string }> => {
       if (isNew.value) {
-        return createUser(payload)
+        const res: CreateUserResponse = await createUser(payload)
+        return res
       }
-      const { password, ...rest } = payload
-      return updateUser({ id: itemID.value, ...rest, ...(password ? { password } : {}) })
+      const { password, ...rest } = payload as CreateUserReq & { password?: string }
+      const user = await updateUser({ id: itemID.value, ...rest, ...(password ? { password } : {}) })
+      return { user }
     },
-    onSuccess: (d: User) => {
+    onSuccess: (result) => {
       resetForm()
-      emit('success', d)
+      emit('success', result)
     },
     onError: (err) => {
       emit('error', err)

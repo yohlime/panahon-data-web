@@ -1,0 +1,25 @@
+---
+const baseUrl = import.meta.env.BASE_URL
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/png" sizes="192x192" href={`${baseUrl}mo-logo.png`} />
+    <link rel="apple-touch-icon" href={`${baseUrl}mo-logo.png`} />
+  </head>
+  <body class="min-h-screen bg-gray-200 text-gray-800">
+    <div class="flex min-h-screen items-center justify-center p-4">
+      <div class="w-full max-w-lg">
+        <div class="mb-6 flex items-center justify-center gap-3">
+          <img src={`${baseUrl}mo-logo.png`} alt="Manila Observatory" class="h-12 w-12" />
+          <span class="font-trajan text-3xl tracking-3px text-mo-Blue">Panahon</span>
+        </div>
+        <slot />
+      </div>
+    </div>
+  </body>
+</html>

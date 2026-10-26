@@ -14,6 +14,7 @@
         :placeholder="placeholder"
         :required="required"
         :disabled="disabled"
+        :readonly="readonly"
         @blur="emit('blur', $event)"
         @change="emit('change', $event)"
       />
@@ -38,6 +39,7 @@
       placeholder?: string
       required?: boolean
       disabled?: boolean
+      readonly?: boolean
       errorMessage?: string
     }>(),
     {
@@ -45,6 +47,7 @@
       placeholder: '',
       required: false,
       disabled: false,
+      readonly: false,
       errorMessage: '',
     },
   )
