@@ -315,25 +315,28 @@
         })
       }
 
-      // Active and All: API keys + access. Rejected and invited users don't need them.
+      // API keys are only useful once the account is active.
       if (status.value !== 'invited') {
         cols.push({
           id: 'tokens',
           header: 'API Keys',
           cell: ({ row }) =>
-            row.original.status === 'invited'
-              ? ''
-              : h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys'),
-        })
-        cols.push({
-          id: 'access',
-          header: 'Access',
-          cell: ({ row }) =>
-            row.original.status === 'invited'
-              ? ''
-              : h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access'),
+            row.original.status === 'active'
+              ? h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys')
+              : '',
         })
       }
+
+      // Access can be granted before activation so the invitee starts with
+      // the correct entitlement.
+      cols.push({
+        id: 'access',
+        header: 'Access',
+        cell: ({ row }) =>
+          row.original.status === 'active' || row.original.status === 'invited'
+            ? h(Button, { onClick: () => openAccess(row.original.id) }, () => 'Access')
+            : '',
+      })
     }
 
     return cols
