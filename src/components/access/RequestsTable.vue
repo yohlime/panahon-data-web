@@ -54,11 +54,7 @@
                     placeholder="Reason"
                     class="bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm"
                   />
-                  <button
-                    class="text-red-600 hover:text-red-800"
-                    :disabled="!denyNote"
-                    @click="confirmDeny(r.id)"
-                  >
+                  <button class="text-red-600 hover:text-red-800" :disabled="!denyNote" @click="confirmDeny(r.id)">
                     Confirm
                   </button>
                   <button class="text-gray-500" @click="denyID = 0">Cancel</button>
@@ -87,6 +83,7 @@
 
   import { approveAccessRequest, denyAccessRequest, listAccessRequests } from '@/stores/access'
   import type { AccessRequest, AccessRequestStatus } from '@/types/access'
+  import { historyLabel } from '@/utils/access'
 
   import Pagination from '@/components/ui/Pagination.vue'
 
@@ -147,10 +144,14 @@
   const describe = (r: AccessRequest) => {
     const parts: string[] = []
     if (r.all_stations) parts.push('all stations')
-    else if (r.station_ids?.length) parts.push(`stations ${r.station_ids.join(', ')}`)
+    else if (r.station_ids?.length) {
+      parts.push(`${r.station_ids.length} station${r.station_ids.length === 1 ? '' : 's'}`)
+    }
     if (r.all_variables) parts.push('all variables')
-    else if (r.variables?.length) parts.push(r.variables.join(', '))
-    if (r.max_days_history) parts.push(`${r.max_days_history}d`)
+    else if (r.variables?.length) {
+      parts.push(`${r.variables.length} variable${r.variables.length === 1 ? '' : 's'}`)
+    }
+    if (r.max_days_history != null) parts.push(historyLabel(r.max_days_history))
     return parts.join(' · ') || '—'
   }
 

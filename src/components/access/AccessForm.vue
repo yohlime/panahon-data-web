@@ -18,7 +18,8 @@
   import Input from '@/components/ui/Input.vue'
   import { MULTISELECT_ALL, type SelectOption } from '@/components/ui/Select.vue'
   import Button from '@/components/ui/Button.vue'
-  import ScopeSelects, { normalizeMaxDays } from '@/components/access/ScopeSelects.vue'
+  import ScopeSelects from '@/components/access/ScopeSelects.vue'
+  import { normalizeMaxDays } from '@/utils/access'
 
   const props = withDefaults(
     defineProps<{
@@ -80,11 +81,10 @@
       },
     })
 
-  watch(
-    () => [props.initialStations, props.initialVariables, props.initialMaxDays, props.initialReason],
-    reset,
-    { immediate: true, deep: true },
-  )
+  watch(() => [props.initialStations, props.initialVariables, props.initialMaxDays, props.initialReason], reset, {
+    immediate: true,
+    deep: true,
+  })
 
   const onSubmit = () => {
     if (!meta.value.valid) return

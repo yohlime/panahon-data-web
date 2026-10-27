@@ -73,7 +73,8 @@
   import { MULTISELECT_ALL } from '@/components/ui/Select.vue'
   import Input from '@/components/ui/Input.vue'
   import Button from '@/components/ui/Button.vue'
-  import ScopeSelects, { MAX_DAYS_OPTIONS } from '@/components/access/ScopeSelects.vue'
+  import ScopeSelects from '@/components/access/ScopeSelects.vue'
+  import { MAX_DAYS_OPTIONS } from '@/utils/access'
 
   const emit = defineEmits<{
     close: []

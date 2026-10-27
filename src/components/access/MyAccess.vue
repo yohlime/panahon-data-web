@@ -9,16 +9,21 @@
 
     <template v-else>
       <section class="bg-white rounded-lg p-4 shadow-sm">
-        <h2 class="text-lg font-semibold mb-2">Current access</h2>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold">Current access</h2>
+          <span v-if="summaryLabel" :class="['rounded-full px-2.5 py-1 text-xs font-medium', summaryClass]">
+            {{ summaryLabel }}
+          </span>
+        </div>
         <div v-if="isLoading" class="text-gray-500">Loading…</div>
-        <dl v-else-if="access" class="grid grid-cols-2 gap-2 text-sm">
-          <dt class="text-gray-500">Stations</dt>
-          <dd>{{ describeStations(access.station_ids) }}</dd>
-          <dt class="text-gray-500">Variables</dt>
-          <dd>{{ describeVariables(access.variables) }}</dd>
-          <dt class="text-gray-500">Max days history</dt>
-          <dd>{{ access.max_days_history }}</dd>
-        </dl>
+        <AccessScopeBadges
+          v-else-if="access"
+          :station-ids="access.station_ids"
+          :variables="access.variables"
+          :max-days="access.max_days_history"
+          :station-names="stationNames"
+          history-row-label="Max days history"
+        />
       </section>
 
       <section class="bg-white rounded-lg p-4 shadow-sm">
@@ -50,10 +55,18 @@
         <h2 class="text-lg font-semibold mb-3">My requests</h2>
         <div v-if="!requests?.length" class="text-gray-500 text-sm">No requests yet.</div>
         <ul v-else class="divide-y divide-gray-200">
-          <li v-for="r in requests" :key="r.id" class="flex items-center justify-between py-2 text-sm">
-            <div class="flex flex-col">
+          <li v-for="r in requests" :key="r.id" class="flex items-start justify-between gap-3 py-3 text-sm">
+            <div class="flex min-w-0 flex-1 flex-col gap-1">
               <span class="font-medium">#{{ r.id }} · {{ r.status }}</span>
-              <span class="text-gray-500">{{ describeRequest(r) }}</span>
+              <AccessScopeBadges
+                dense
+                :station-ids="r.all_stations ? null : (r.station_ids ?? [])"
+                :variables="r.all_variables ? null : (r.variables ?? [])"
+                :max-days="r.max_days_history"
+                :station-names="stationNames"
+                :show-stations="r.all_stations || (r.station_ids?.length ?? 0) > 0"
+                :show-variables="r.all_variables || (r.variables?.length ?? 0) > 0"
+              />
               <span v-if="r.review_note" class="text-gray-500">Note: {{ r.review_note }}</span>
             </div>
             <button
@@ -87,8 +100,10 @@
   import { $authUserID, $isAdmin } from '@/stores/user'
   import { ACCESS_VARIABLES } from '@/schemas/access'
   import type { AccessRequest } from '@/types/access'
+  import { ACCESS_SUMMARY_LABELS, accessSummary } from '@/utils/access'
 
   import AccessForm, { type AccessFormValues } from '@/components/access/AccessForm.vue'
+  import AccessScopeBadges from '@/components/access/AccessScopeBadges.vue'
 
   const queryClient = useQueryClient()
   const isAdmin = useStore($isAdmin)
@@ -103,6 +118,22 @@
     queryKey: ['users', userID, 'access-requests'],
     queryFn: () => listUserAccessRequests(userID.value!),
     enabled: () => !!userID.value,
+  })
+
+  const summary = computed(() => {
+    if (!access.value) return null
+    return accessSummary(access.value.station_ids, access.value.variables, access.value.max_days_history)
+  })
+  const summaryLabel = computed(() => (summary.value ? ACCESS_SUMMARY_LABELS[summary.value] : ''))
+  const summaryClass = computed(() => {
+    switch (summary.value) {
+      case 'full':
+        return 'bg-emerald-50 text-emerald-700'
+      case 'none':
+        return 'bg-amber-50 text-amber-700'
+      default:
+        return 'bg-blue-50 text-mo-Blue'
+    }
   })
 
   const pendingRequest = computed(() => requests.value?.find((r) => r.status === 'pending') ?? null)
@@ -127,16 +158,20 @@
   const approvedVariables = ref<(string | number)[]>([])
 
   const stationNames = computed(() => new Map((stations.value?.items ?? []).map((s) => [s.id, s.name])))
-  const stationName = (id: number) => stationNames.value.get(id) ?? `#${id}`
 
-  const stationOptions = computed(() =>
-    (stations.value?.items ?? [])
+  const stationOptions = computed(() => {
+    if (access.value?.station_ids === null) return []
+    return (stations.value?.items ?? [])
       .filter((s) => !approvedStations.value.includes(s.id))
-      .map((s) => ({ value: s.id, label: s.name })),
-  )
-  const variableOptions = computed(() =>
-    ACCESS_VARIABLES.filter((v) => !approvedVariables.value.includes(v)).map((v) => ({ value: v, label: v })),
-  )
+      .map((s) => ({ value: s.id, label: s.name }))
+  })
+  const variableOptions = computed(() => {
+    if (access.value?.variables === null) return []
+    return ACCESS_VARIABLES.filter((v) => !approvedVariables.value.includes(v)).map((v) => ({
+      value: v,
+      label: v,
+    }))
+  })
 
   watch(
     access,
@@ -184,19 +219,6 @@
     mutationFn: (id: number) => cancelUserAccessRequest(userID.value!, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', userID.value, 'access-requests'] }),
   })
-
-  const describeStations = (ids: number[] | null) =>
-    ids === null ? 'All' : ids.length ? ids.map(stationName).join(', ') : 'None'
-  const describeVariables = (vars: string[] | null) => (vars === null ? 'All' : vars.length ? vars.join(', ') : 'None')
-  const describeRequest = (r: AccessRequest) => {
-    const parts: string[] = []
-    if (r.all_stations) parts.push('all stations')
-    else if (r.station_ids?.length) parts.push(`stations ${r.station_ids.map(stationName).join(', ')}`)
-    if (r.all_variables) parts.push('all variables')
-    else if (r.variables?.length) parts.push(r.variables.join(', '))
-    if (r.max_days_history) parts.push(`${r.max_days_history}d`)
-    return parts.join(' · ') || '—'
-  }
 
   const cancel = (id: number) => doCancel(id)
 </script>
