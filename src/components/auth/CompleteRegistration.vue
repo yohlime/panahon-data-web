@@ -89,8 +89,8 @@
   const submit = async () => {
     error.value = ''
 
-    if (password.value.length < 6) {
-      error.value = 'Password must contain at least 6 characters.'
+    if (password.value.length < 8) {
+      error.value = 'Password must contain at least 8 characters.'
       return
     }
     if (password.value !== confirmPassword.value) {

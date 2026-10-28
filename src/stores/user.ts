@@ -7,6 +7,9 @@ import {
   createUserArgsSchema,
   createUserResponseSchema,
   paginatedUserSchema,
+  passwordResetArgsSchema,
+  passwordResetInfoSchema,
+  passwordResetLinkResponseSchema,
   registrationInfoSchema,
   registrationLinkResponseSchema,
   updateProfileArgsSchema,
@@ -15,6 +18,7 @@ import {
 } from '@/schemas/user'
 import type {
   CompleteRegistrationReq,
+  PasswordResetReq,
   CreateUserReq,
   UpdateProfileReq,
   UpdateUserReq,
@@ -126,6 +130,21 @@ export const validateRegistration = async (token: string) => {
 export const completeRegistration = async (args: CompleteRegistrationReq) => {
   const parsed = completeRegistrationArgsSchema.parse(args)
   await axios.post(`${baseUrl}/complete-registration/accept`, parsed)
+}
+
+export const createPasswordResetLink = async (userID: number) => {
+  const { data } = await axios.post(`${baseUrl}/${userID}/password-reset-link`)
+  return passwordResetLinkResponseSchema.parse(data)
+}
+
+export const validatePasswordReset = async (token: string) => {
+  const { data } = await axios.post(`${baseUrl}/password-reset/validate`, { token })
+  return passwordResetInfoSchema.parse(data)
+}
+
+export const resetPassword = async (args: PasswordResetReq) => {
+  const parsed = passwordResetArgsSchema.parse(args)
+  await axios.post(`${baseUrl}/password-reset/accept`, parsed)
 }
 
 export const updateUser = async (args: UpdateUserReq) => {

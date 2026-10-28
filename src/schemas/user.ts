@@ -12,8 +12,8 @@ export const userRegisterArgsSchema = z
     full_name: z.string().min(1, { error: 'Required' }),
     email: z.email(),
     username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
-    password: z.string().min(6, { error: 'Must contain at least 6 characters' }),
-    confirm_password: z.string(),
+    password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+    confirm_password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
   })
   .refine((data) => data.password === data.confirm_password, {
     path: ['confirm_password'],
@@ -58,7 +58,7 @@ export const updateUserArgsSchema = z.object({
   id: z.number(),
   full_name: z.string().optional(),
   email: optionalEmailSchema.optional(),
-  password: z.union([z.string().min(6, { error: 'Must contain at least 6 characters' }), z.literal('')]).optional(),
+  password: z.union([z.string().min(8, { error: 'Must contain at least 8 characters' }), z.literal('')]).optional(),
   roles: z.string().array().optional(),
 })
 
@@ -66,7 +66,7 @@ export const updateProfileArgsSchema = z.object({
   current_password: z.string().min(6, { error: 'Enter your current password' }),
   username: z.string().regex(/^[a-z0-9]+$/, { error: 'Must be alphanumeric' }),
   email: optionalEmailSchema,
-  password: z.union([z.string().min(6, { error: 'Must contain at least 6 characters' }), z.literal('')]).optional(),
+  password: z.union([z.string().min(8, { error: 'Must contain at least 8 characters' }), z.literal('')]).optional(),
 })
 
 export const registrationInfoSchema = z.object({
@@ -80,8 +80,39 @@ export const completeRegistrationArgsSchema = z
     token: z.string().min(1),
     full_name: z.string().optional(),
     email: optionalEmailSchema.optional(),
-    password: z.string().min(6, { error: 'Must contain at least 6 characters' }),
-    confirm_password: z.string(),
+    password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+    confirm_password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    path: ['confirm_password'],
+    error: "Passwords don't match",
+  })
+
+export const passwordResetLinkResponseSchema = z.object({
+  reset_url: z.string(),
+})
+
+export const passwordResetInfoSchema = z.object({
+  username: z.string(),
+  full_name: z.string(),
+  email: optionalEmailSchema,
+})
+
+export const passwordResetFormSchema = z
+  .object({
+    password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+    confirm_password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    path: ['confirm_password'],
+    error: "Passwords don't match",
+  })
+
+export const passwordResetArgsSchema = z
+  .object({
+    token: z.string().min(1),
+    password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
+    confirm_password: z.string().min(8, { error: 'Must contain at least 8 characters' }),
   })
   .refine((data) => data.password === data.confirm_password, {
     path: ['confirm_password'],

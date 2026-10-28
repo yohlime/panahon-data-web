@@ -132,6 +132,31 @@
         </DialogContent>
       </DialogPortal>
     </DialogRoot>
+
+    <DialogRoot v-model:open="showPasswordResetDialog" v-slot="{ close }">
+      <DialogPortal>
+        <DialogOverlay class="bg-gray-900/40 data-[state=open]:animate-overlayShow fixed inset-0 z-30" />
+        <DialogContent
+          class="data-[state=open]:animate-contentShow fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[560px] translate-x-[-50%] translate-y-[-50%] rounded-[6px] bg-white p-[25px] shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] focus:outline-none z-[100]"
+          :aria-describedby="undefined"
+        >
+          <div class="flex w-full flex-col gap-4">
+            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900">Password reset link</h1>
+            <p class="text-sm text-gray-600">
+              Copy this link and send it to the user. It is single-use, expires in 1 hour, and signs out all of the
+              user's existing sessions when used.
+            </p>
+            <Input name="password-reset-link" :model-value="passwordResetURL" readonly />
+            <div class="flex justify-end gap-2">
+              <Button class="bg-gray-200 border border-gray-400 hover:bg-gray-300" @click="close">Close</Button>
+              <Button class="text-gray-200 bg-mo-Blue hover:bg-mo-Blue/90" @click="copyPasswordResetLink">
+                {{ passwordResetCopied ? 'Copied' : 'Copy link' }}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
   </div>
 </template>
 
@@ -145,6 +170,7 @@
     $page,
     $perPage,
     approveUser,
+    createPasswordResetLink,
     createRegistrationLink,
     deleteUser,
     listUsers,
@@ -193,6 +219,9 @@
   const showRegistrationDialog = ref(false)
   const registrationURL = ref('')
   const linkCopied = ref(false)
+  const showPasswordResetDialog = ref(false)
+  const passwordResetURL = ref('')
+  const passwordResetCopied = ref(false)
   const selectedUserID = ref(0)
   const selectedAccessUserID = ref(0)
   const rejectID = ref(0)
@@ -223,6 +252,23 @@
     await navigator.clipboard.writeText(registrationURL.value)
     linkCopied.value = true
     setTimeout(() => (linkCopied.value = false), 2000)
+  }
+
+  const showPasswordResetLink = async (userID: number) => {
+    try {
+      const { reset_url } = await createPasswordResetLink(userID)
+      passwordResetURL.value = reset_url
+      passwordResetCopied.value = false
+      showPasswordResetDialog.value = true
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const copyPasswordResetLink = async () => {
+    await navigator.clipboard.writeText(passwordResetURL.value)
+    passwordResetCopied.value = true
+    setTimeout(() => (passwordResetCopied.value = false), 2000)
   }
 
   const { mutate: approve } = useMutation({
@@ -323,6 +369,17 @@
           cell: ({ row }) =>
             row.original.status === 'active'
               ? h(Button, { onClick: () => openTokens(row.original.id) }, () => 'Keys')
+              : '',
+        })
+      }
+
+      if (status.value !== 'invited') {
+        cols.push({
+          id: 'password-reset',
+          header: 'Password',
+          cell: ({ row }) =>
+            row.original.status === 'active'
+              ? h(Button, { onClick: () => showPasswordResetLink(row.original.id) }, () => 'Reset')
               : '',
         })
       }
