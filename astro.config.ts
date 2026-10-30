@@ -9,6 +9,8 @@ import mkcert from 'vite-plugin-mkcert'
 
 const { APP_PORT, APP_SITE, APP_BASE, BACKEND_URL } = loadEnv(process.env.NODE_ENV, process.cwd(), '')
 const basePath = `${(APP_BASE ?? '/').replace(/\/$/, '')}/`
+// mkcert is for the local HTTPS dev server; CI only builds and does not need it.
+const isCI = Boolean(process.env.CI)
 
 // https://astro.build/config
 export default defineConfig({
@@ -27,7 +29,7 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: [mkcert()],
+    plugins: isCI ? [] : [mkcert()],
     server: {
       proxy: BACKEND_URL ? { '/api/v1': `${BACKEND_URL}/` } : {},
     },
